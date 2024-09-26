@@ -13,7 +13,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1"
       />
-      <title>机器学习：ResNet网络，BN及迁移学习 |  LegendLeo Chen 的空间</title>
+      <title>深度学习 |  LegendLeo Chen 的空间</title>
   <meta name="generator" content="hexo-theme-ayer">
       
       <link rel="shortcut icon" href="/mylogo.ico" />
@@ -61,197 +61,177 @@
       
     <main class="content on">
       <section class="outer">
-  <article
-  id="post-机器学习：ResNet网络，BN及迁移学习"
-  class="article article-type-post"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
+  
+  
+  <article class="articles">
     
-    <header class="article-header">
+    
+    <h1 class="page-type-title">深度学习</h1>
+    
+    
+  
+  
+  
+  
+  
+  
+  <div class="archives-wrap">
+    <div class="archive-year-wrap">
+      <a href="/archives/2024" class="archive-year">2024</a>
+    </div>
+    <div class="archives">
+      
+      <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      <a href="/2024/09/26/%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E9%87%91%E8%9E%8D%E5%BC%82%E5%B8%B8%E6%A3%80%E6%B5%8B/" class="archive-article-date">
+  <time datetime="2024-09-26T12:25:56.000Z" itemprop="datePublished">09/26</time>
+</a>
        
-<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  机器学习：ResNet网络，BN及迁移学习
-</h1>
+<h2 itemprop="name">
+  <a class="archive-article-title" href="/2024/09/26/%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E9%87%91%E8%9E%8D%E5%BC%82%E5%B8%B8%E6%A3%80%E6%B5%8B/"
+    >基于图神经网络的金融异常检测</a> 
+</h2>
  
 
-      
     </header>
-     
-    <div class="article-meta">
-      <a href="/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/" class="article-date">
-  <time datetime="2023-09-08T08:43:08.000Z" itemprop="datePublished">2023-09-08</time>
-</a> 
+    
+      
   <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
-  </div>
-  
-<div class="word_count">
-    <span class="post-time">
-        <span class="post-meta-item-icon">
-            <i class="ri-quill-pen-line"></i>
-            <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">894</span>
-        </span>
-    </span>
-
-    <span class="post-time">
-        &nbsp; | &nbsp;
-        <span class="post-meta-item-icon">
-            <i class="ri-book-open-line"></i>
-            <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">3 分钟</span>
-        </span>
-    </span>
-</div>
- 
-    </div>
-      
-    <div class="tocbot"></div>
-
-
-
-
-  
-    <div class="article-entry" itemprop="articleBody">
-       
-  <p>ResNet（Residual Network）是一种深度卷积神经网络架构，用于图像识别和计算机视觉任务。它是由微软研究员提出的，并在2015年的一篇论文中首次提出。ResNet的主要特点是引入了残差连接（residual connections），允许神经网络在训练过程中更轻松地学习到深层特征表示。<span id="more"></span></p>
-<h1 id="⛅ResNet"><a href="#⛅ResNet" class="headerlink" title="⛅ResNet"></a>⛅ResNet</h1><p><img src="/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/ResNet%E6%80%A7%E8%83%BD.png" alt="ResNet性能"><br><img src="/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/ResNet%E7%BB%93%E6%9E%84.png" alt="ResNet网络结构"></p>
-<ul>
-<li>一般情况下卷积神经网络的层数并不是越深越好，因为存在<strong>梯度消失或梯度爆炸</strong>问题，如上图在使用ResNet网络之后，随着网络深度加深，模型效果能够得到进一步提升。</li>
-<li>网络的亮点：</li>
-</ul>
-<ol>
-<li>超深的网络结构（1000+）</li>
-<li>提出residual结构</li>
-<li>使用Batch Normalization加速训练（不再需要dropout）</li>
-</ol>
-<h2 id="残差（residual）结构"><a href="#残差（residual）结构" class="headerlink" title="残差（residual）结构"></a>残差（residual）结构</h2><p><img src="/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/residual%E7%BB%93%E6%9E%84.png" alt="残差结构"></p>
-<ul>
-<li><p>如图，残差结构就是将主线和捷径相加进行输出，相当于输出和原本的输入进行相加。</p>
-</li>
-<li><p>左边这种残差结构应用于网络深度小的网络，右边这种残差结构能节省更多的参数，用于更深的网络。</p>
-<blockquote>
-<p>参数数目&#x3D;输入通道数×卷积核个数×长×宽</p>
-</blockquote>
-</li>
-<li><p>观察ResNet网络图，其中捷径为虚线的残差结构，指的是如下图的结构，在捷径上新增一层卷积<br><img src="/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/%E8%99%9A%E7%BA%BF%E6%AE%8B%E5%B7%AE%E7%BB%93%E6%9E%84.png" alt="虚线代表的残差结构"></p>
-</li>
-</ul>
-<h1 id="⛅Batch-Normalization"><a href="#⛅Batch-Normalization" class="headerlink" title="⛅Batch Normalization"></a>⛅Batch Normalization</h1><p>我们在图像预处理过程中通常会对图像进行标准化处理，这样能够加速网络的收敛，假设一个两层的卷积结构，对于第一层Conv来说输入的就是满足某一分布的特征矩阵，但对于第二次Conv而言输入的feature map就不一定满足某一分布规律了(注意这里所说满足某一分布规律并不是指某一feature map的数据要满足分布规律，理论上是指整个训练样本集所对应feature map的数据要满足分布规律)。而我们BatchNormalization的目的就是使我们的feature map满足均值为0，方差为1的分布规律<br><img src="/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/BN%E7%9A%84%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F.png" alt="BN的计算公式"><br><strong>对于一个d维的输入x，我们将其每一个维度都进行标准化处理</strong>，如对于RGB图像，我们需要分别对三个通道都进行处理。运算公式如上图<br><img src="/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/%E6%A0%87%E5%87%86%E5%8C%96%E5%A4%84%E7%90%86.png" alt="标准化处理"></p>
-<ul>
-<li><p>上图是一个例子，两个通道，两个feature（特征矩阵），分别计算整个channel1和channel2的均值和方差，得到的值带入公式运算得到标准化后的结果。</p>
-</li>
-<li><p>使用BN时的注意事项：</p>
-</li>
-</ul>
-<ol>
-<li>训练时training设置为True，验证时设置为False（pytorch中通过创建模型model.train()和model.eval()进行更改）；</li>
-<li>batch size尽可能大，因为一批次训练的越多，均值方差越接近于整个数据集；</li>
-<li>bn层放在卷积层和激活函数层之间，卷积层不设置偏置bias，因为会被消掉。</li>
-</ol>
-<h1 id="⛅迁移学习"><a href="#⛅迁移学习" class="headerlink" title="⛅迁移学习"></a>⛅迁移学习</h1><p>使用他人预训练过的模型参数来训练，本质上可以认为是将一些浅层通用的特征直接拿来训练出自己需要的高层的特征识别能力，优势如下：</p>
-<ol>
-<li>可以快速训练出理想结果</li>
-<li>当数据集小时也能有理想结果</li>
-</ol>
-<p><strong>注意当使用他人的模型训练，也要注意采取和他人相同的数据预处理</strong></p>
-<p>常见方式：</p>
-<ol>
-<li>载入权重后训练所有参数</li>
-<li>载入权重后只训练最后几层参数</li>
-<li>载入权重后在原网络基础上再添加一层全连接层，仅训练该全连接层</li>
-</ol>
- 
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-<div class="share-btn">
-      <span class="share-sns share-outer">
-        <i class="ri-share-forward-line"></i>
-        分享
-      </span>
-      <div class="share-wrap">
-        <i class="arrow"></i>
-        <div class="share-icons">
-          
-          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
-            <i class="ri-weibo-fill"></i>
-          </a>
-          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
-            <i class="ri-wechat-fill"></i>
-          </a>
-          <a class="qq share-sns" href="javascript:;" data-type="qq">
-            <i class="ri-qq-fill"></i>
-          </a>
-          <a class="douban share-sns" href="javascript:;" data-type="douban">
-            <i class="ri-douban-line"></i>
-          </a>
-          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
-            <i class="icon icon-qzone"></i>
-          </a> -->
-          
-          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
-            <i class="ri-facebook-circle-fill"></i>
-          </a>
-          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
-            <i class="ri-twitter-fill"></i>
-          </a>
-          <a class="google share-sns" href="javascript:;" data-type="google">
-            <i class="ri-google-fill"></i>
-          </a>
-        </div>
-      </div>
-</div>
-
-<div class="wx-share-modal">
-    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
-    <p>扫一扫，分享到微信</p>
-    <div class="wx-qrcode">
-      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://legendleochen.top/2023/09/08/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/" alt="微信分享二维码">
-    </div>
-</div>
-
-<div id="share-mask"></div>  
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/BN/" rel="tag">BN</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ResNet/" rel="tag">ResNet</a></li></ul>
-
-    </footer>
+    <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a> / <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
   </div>
 
-   
-  <nav class="article-nav">
-    
-      <a href="/2023/11/05/%E6%91%84%E5%BD%B1%E5%89%8D%E6%9C%9F%E5%85%A5%E9%97%A8%EF%BC%881%EF%BC%89/" class="article-nav-link">
-        <strong class="article-nav-caption">上一篇</strong>
-        <div class="article-nav-title">
-          
-            摄影前期入门（1）
-          
-        </div>
-      </a>
     
     
-      <a href="/2023/09/06/Yolo%E7%B3%BB%E5%88%97%E7%90%86%E8%AE%BA/" class="article-nav-link">
-        <strong class="article-nav-caption">下一篇</strong>
-        <div class="article-nav-title">YOLO系列理论</div>
-      </a>
-    
-  </nav>
-
-  
-   
-  
-    
+  </div>
 </article>
+      
+  
+  
+  
+  </div>
+  </div>
+  
+  
+  <div class="archives-wrap">
+    <div class="archive-year-wrap">
+      <a href="/archives/2023" class="archive-year">2023</a>
+    </div>
+    <div class="archives">
+      
+      <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      <a href="/2023/09/08/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/" class="archive-article-date">
+  <time datetime="2023-09-08T08:43:08.000Z" itemprop="datePublished">09/08</time>
+</a>
+       
+<h2 itemprop="name">
+  <a class="archive-article-title" href="/2023/09/08/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%EF%BC%9AResNet%E7%BD%91%E7%BB%9C%EF%BC%8CBN%E5%8F%8A%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0/"
+    >深度学习：ResNet网络，BN及迁移学习</a> 
+</h2>
+ 
 
+    </header>
+    
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+  </div>
+
+    
+    
+  </div>
+</article>
+      
+  
+  
+      <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      <a href="/2023/09/06/Yolo%E7%B3%BB%E5%88%97%E7%90%86%E8%AE%BA/" class="archive-article-date">
+  <time datetime="2023-09-06T07:39:13.000Z" itemprop="datePublished">09/06</time>
+</a>
+       
+<h2 itemprop="name">
+  <a class="archive-article-title" href="/2023/09/06/Yolo%E7%B3%BB%E5%88%97%E7%90%86%E8%AE%BA/"
+    >YOLO系列理论</a> 
+</h2>
+ 
+
+    </header>
+    
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+  </div>
+
+    
+    
+  </div>
+</article>
+      
+  
+  
+      <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      <a href="/2023/04/15/Pytorch%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9F%A5%E8%AF%86/" class="archive-article-date">
+  <time datetime="2023-04-15T09:33:38.000Z" itemprop="datePublished">04/15</time>
+</a>
+       
+<h2 itemprop="name">
+  <a class="archive-article-title" href="/2023/04/15/Pytorch%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%9F%A5%E8%AF%86/"
+    >Pytorch机器学习知识</a> 
+</h2>
+ 
+
+    </header>
+    
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a> / <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a> / <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+  </div>
+
+    
+    
+  </div>
+</article>
+      
+  
+  
+      <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      <a href="/2023/04/15/%E5%9F%BA%E4%BA%8EPytorch%E7%9A%84LSTM%E7%BD%91%E7%BB%9C%E6%97%B6%E5%BA%8F%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%E5%8F%8A%E9%A2%84%E6%B5%8B/" class="archive-article-date">
+  <time datetime="2023-04-15T07:30:14.000Z" itemprop="datePublished">04/15</time>
+</a>
+       
+<h2 itemprop="name">
+  <a class="archive-article-title" href="/2023/04/15/%E5%9F%BA%E4%BA%8EPytorch%E7%9A%84LSTM%E7%BD%91%E7%BB%9C%E6%97%B6%E5%BA%8F%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%E5%8F%8A%E9%A2%84%E6%B5%8B/"
+    >基于Pytorch的LSTM网络时序模型训练及预测</a> 
+</h2>
+ 
+
+    </header>
+    
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a> / <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a> / <a class="article-category-link" href="/categories/%E9%A1%B9%E7%9B%AE/">项目</a>
+  </div>
+
+    
+    
+  </div>
+</article>
+      
+      
+    </div>
+  </div>
+  
+  
+
+  
 </section>
       <footer class="footer">
   <div class="outer">
@@ -392,22 +372,6 @@
 <script src="/js/lazyload.min.js"></script>
 
 <!-- Tocbot -->
- 
-<script src="/js/tocbot.min.js"></script>
-
-<script>
-  tocbot.init({
-    tocSelector: ".tocbot",
-    contentSelector: ".article-entry",
-    headingSelector: "h1, h2, h3, h4, h5, h6",
-    hasInnerContainers: true,
-    scrollSmooth: true,
-    scrollContainer: "main",
-    positionFixedSelector: ".tocbot",
-    positionFixedClass: "is-position-fixed",
-    fixedSidebarOffset: "auto",
-  });
-</script>
 
 <script src="https://cdn.staticfile.org/jquery-modal/0.9.2/jquery.modal.min.js"></script>
 <link

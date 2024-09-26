@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta name="description" content="一个秘密空间" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>基于图神经网络的金融异常检测 |  LegendLeo Chen 的空间</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/mylogo.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+
+      
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+
+      
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="https://cdn.staticfile.org/pace/1.2.4/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+<!-- 封面标闪烁 -->
+<link rel="stylesheet" href="/css/zhyBlogTitle.css">
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<!-- jquery，懒加载、统计、说说需要的jquery -->
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-基于图神经网络的金融异常检测"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  基于图神经网络的金融异常检测
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/2024/09/26/%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E9%87%91%E8%9E%8D%E5%BC%82%E5%B8%B8%E6%A3%80%E6%B5%8B/" class="article-date">
+  <time datetime="2024-09-26T12:25:56.000Z" itemprop="datePublished">2024-09-26</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a> / <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.4k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">10 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h1 id="🔥概述"><a href="#🔥概述" class="headerlink" title="🔥概述"></a>🔥概述</h1><ul>
+<li>本次任务使用图神经网络，以金融中异常检测为例，实现大规模图数据结构的分类预测。本任务基于的数据集DGraph，DGraph 是大规模动态图数据集的集合，由真实金融场景中随着时间演变事件和标签构成。<span id="more"></span></li>
+<li>DGraph-Fin 是一个由数百万个节点和边组成的有向无边权的动态图。它代表了Finvolution Group用户之间的社交网络，其中一个节点对应一个Finvolution 用户，从一个用户到另一个用户的边表示该用户将另一个用户视为紧急联系人。 下面是位于dataset&#x2F;DGraphFin目录的DGraphFin数据集的描述:</li>
+</ul>
+<blockquote>
+<p>x:  20维节点特征向量<br>y:  节点对应标签，一共包含四类。其中类1代表欺诈用户而类0代表正常用户(实验中需要进行预测的两类标签)，类2和类3则是背景用户，即无需预测其标签。<br>edge_index:  图数据边集,每条边的形式(id_a,id_b)，其中ids是x中的索引<br>edge_type: 共11种类型的边<br>edge_timestamp: 脱敏后的时间戳<br>train_mask, valid_mask, test_mask: 训练集，验证集和测试集掩码</p>
+</blockquote>
+<ul>
+<li>本预测任务为识别欺诈用户的节点预测任务,只需要将欺诈用户（Class 1）从正常用户（Class 0）中区分出来。需要注意的是，其中测试集中样本对应的label均被标记为-100。</li>
+</ul>
+<h1 id="🔥图神经网络——SAGE"><a href="#🔥图神经网络——SAGE" class="headerlink" title="🔥图神经网络——SAGE"></a>🔥图神经网络——SAGE</h1><p>本次使用的SAGE主要思想是根据自身节点及其邻居节点的信息，通过某种聚合方式来更新自身节点信息，适用于动态图和大规模图场景。<br>主要特点<br>1.	采样策略：与传统的GNN方法需要在每个节点的所有邻居上进行计算不同，SAGE通过随机采样来选择一定数量的邻居节点，从而降低计算复杂度。<br>2.	聚合函数：SAGE采用多种聚合函数（如均值、LSTM、池化等）来合并邻居节点的信息，这样可以灵活地适应不同的应用场景。<br>3.	可扩展性：由于SAGE不依赖于整个图的结构，可以在训练过程中动态处理新节点和边，具有较强的可扩展性。<br>4.	半监督学习：SAGE支持半监督学习，可以在有标签和无标签的数据上进行训练，有助于提升模型性能。<br>具体流程<br>1.	节点采样：对于每个节点，从其邻居中随机选择一部分进行后续处理。<br>2.	信息聚合：使用选定的聚合函数整合邻居节点的特征信息。<br>3.	节点更新：将聚合后的信息与节点自身的特征结合，更新节点的表示。<br>4.	多层堆叠：通过多层的采样和聚合，逐层更新节点表示，最终得到节点的高维特征向量。</p>
+<h1 id="🔥实现"><a href="#🔥实现" class="headerlink" title="🔥实现"></a>🔥实现</h1><p>首先调库</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> utils<span class="token punctuation">.</span>dgraphfin <span class="token keyword">import</span> DGraphFin
+<span class="token keyword">from</span> utils<span class="token punctuation">.</span>utils <span class="token keyword">import</span> prepare_folder
+<span class="token keyword">from</span> utils<span class="token punctuation">.</span>evaluator <span class="token keyword">import</span> Evaluator
+
+<span class="token keyword">import</span> torch
+<span class="token keyword">import</span> torch<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>functional <span class="token keyword">as</span> F
+<span class="token keyword">import</span> torch<span class="token punctuation">.</span>nn <span class="token keyword">as</span> nn
+
+<span class="token keyword">import</span> torch_geometric<span class="token punctuation">.</span>transforms <span class="token keyword">as</span> T
+<span class="token keyword">from</span> torch_geometric<span class="token punctuation">.</span>nn <span class="token keyword">import</span> GATConv<span class="token punctuation">,</span> GCNConv<span class="token punctuation">,</span> SAGEConv
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> torch_geometric<span class="token punctuation">.</span>data <span class="token keyword">import</span> Data
+<span class="token keyword">import</span> os
+
+<span class="token comment" spellcheck="true">#设置gpu设备</span>
+device <span class="token operator">=</span> <span class="token number">0</span>
+device <span class="token operator">=</span> f<span class="token string">'cuda:{device}'</span> <span class="token keyword">if</span> torch<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>is_available<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">else</span> <span class="token string">'cpu'</span>
+device <span class="token operator">=</span> torch<span class="token punctuation">.</span>device<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="数据处理与概览"><a href="#数据处理与概览" class="headerlink" title="数据处理与概览"></a>数据处理与概览</h2><p>然后对数据集进行概览，首先读取数据集为DGraphFin模式，注意<code>remove_edge_index=False</code>是为了保留数据当中的边的信息</p>
+<pre class="line-numbers language-python"><code class="language-python">path<span class="token operator">=</span><span class="token string">'./datasets/'</span>          <span class="token comment" spellcheck="true"># 数据保存路径</span>
+save_dir<span class="token operator">=</span><span class="token string">'./results/'</span>       <span class="token comment" spellcheck="true"># 模型保存路径</span>
+dataset_name<span class="token operator">=</span><span class="token string">'DGraph'</span>
+dataset <span class="token operator">=</span> DGraphFin<span class="token punctuation">(</span>root<span class="token operator">=</span>path<span class="token punctuation">,</span> name<span class="token operator">=</span>dataset_name<span class="token punctuation">,</span> transform<span class="token operator">=</span>T<span class="token punctuation">.</span>ToSparseTensor<span class="token punctuation">(</span>remove_edge_index<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+nlabels <span class="token operator">=</span> dataset<span class="token punctuation">.</span>num_classes       <span class="token comment" spellcheck="true"># 分类数2</span>
+<span class="token keyword">if</span> dataset_name <span class="token keyword">in</span> <span class="token punctuation">[</span><span class="token string">'DGraph'</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+    nlabels <span class="token operator">=</span> <span class="token number">2</span>    <span class="token comment" spellcheck="true"># 本实验中仅需预测类0和类1</span>
+
+data <span class="token operator">=</span> dataset<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token comment" spellcheck="true"># data.adj_t = data.adj_t.to_symmetric() # 将有向图转化为无向图</span>
+
+<span class="token keyword">if</span> dataset_name <span class="token keyword">in</span> <span class="token punctuation">[</span><span class="token string">'DGraph'</span><span class="token punctuation">]</span><span class="token punctuation">:</span>      <span class="token comment" spellcheck="true"># 归一化</span>
+    x <span class="token operator">=</span> data<span class="token punctuation">.</span>x
+    x <span class="token operator">=</span> <span class="token punctuation">(</span>x <span class="token operator">-</span> x<span class="token punctuation">.</span>mean<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">/</span> x<span class="token punctuation">.</span>std<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+    data<span class="token punctuation">.</span>x <span class="token operator">=</span> x
+<span class="token keyword">if</span> data<span class="token punctuation">.</span>y<span class="token punctuation">.</span>dim<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">2</span><span class="token punctuation">:</span>
+    data<span class="token punctuation">.</span>y <span class="token operator">=</span> data<span class="token punctuation">.</span>y<span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+
+split_idx <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">'train'</span><span class="token punctuation">:</span> data<span class="token punctuation">.</span>train_mask<span class="token punctuation">,</span> <span class="token string">'valid'</span><span class="token punctuation">:</span> data<span class="token punctuation">.</span>valid_mask<span class="token punctuation">,</span> <span class="token string">'test'</span><span class="token punctuation">:</span> data<span class="token punctuation">.</span>test_mask<span class="token punctuation">}</span>  <span class="token comment" spellcheck="true">#划分训练集，验证集</span>
+
+train_idx <span class="token operator">=</span> split_idx<span class="token punctuation">[</span><span class="token string">'train'</span><span class="token punctuation">]</span>
+result_dir <span class="token operator">=</span> prepare_folder<span class="token punctuation">(</span>dataset_name<span class="token punctuation">,</span><span class="token string">'mlp'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true">#feature</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>data<span class="token punctuation">.</span>y<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true">#label</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>data<span class="token punctuation">.</span>adj_t<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>预处理后得到数据data &#x3D; dataset[0]，再把数据进行归一化后打印出内容：</p>
+<blockquote>
+<p>Data(x&#x3D;[3700550,20],edge_index&#x3D;[2,4300999], edge_attr&#x3D;[4300999], y&#x3D;[3700550],train_mask&#x3D;[857899],valid_mask&#x3D;[183862],test_mask&#x3D;[183840], adj_t&#x3D;[3700550, 3700550])</p>
+</blockquote>
+<p>其中x是输入，20个特征维度，整个图有370多万个节点；430多万条边（edge_index）；edge_attr代表边的类型（有11种关系）；y仅1维度即类别编号；三个mask代表数据集被分为训练、验证、测试三个部分，分别用索引tensor存放；adj_t是邻接矩阵，包含了所有节点的连接情况的稀疏阵。<br>可以看到数据集异常庞大，进行训练对资源的压力也不言而喻。选用SAGE模型也是因为其对于大规模图的学习能力很强的同时又能降低复杂度。</p>
+<h2 id="SAGE网络"><a href="#SAGE网络" class="headerlink" title="SAGE网络"></a>SAGE网络</h2><p>使用torch_geometric库当中的SAGEConv实现，其参数为输入特征维度和输出类别维度，很容易使用。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">SAGE</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> in_feats<span class="token punctuation">,</span> h_feats<span class="token punctuation">,</span> num_classes<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        super<span class="token punctuation">(</span>SAGE<span class="token punctuation">,</span> self<span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>conv1 <span class="token operator">=</span> SAGEConv<span class="token punctuation">(</span>in_feats<span class="token punctuation">,</span> h_feats<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>dropout <span class="token operator">=</span> nn<span class="token punctuation">.</span>Dropout<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>conv2 <span class="token operator">=</span> SAGEConv<span class="token punctuation">(</span>h_feats<span class="token punctuation">,</span> h_feats<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>conv3 <span class="token operator">=</span> SAGEConv<span class="token punctuation">(</span>h_feats<span class="token punctuation">,</span> num_classes<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> edge_index<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        h <span class="token operator">=</span> self<span class="token punctuation">.</span>conv1<span class="token punctuation">(</span>x<span class="token punctuation">,</span> edge_index<span class="token punctuation">)</span>
+        h <span class="token operator">=</span> F<span class="token punctuation">.</span>relu<span class="token punctuation">(</span>self<span class="token punctuation">.</span>dropout<span class="token punctuation">(</span>h<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        h <span class="token operator">=</span> self<span class="token punctuation">.</span>conv2<span class="token punctuation">(</span>h<span class="token punctuation">,</span> edge_index<span class="token punctuation">)</span>
+        h <span class="token operator">=</span> F<span class="token punctuation">.</span>relu<span class="token punctuation">(</span>self<span class="token punctuation">.</span>dropout<span class="token punctuation">(</span>h<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        h <span class="token operator">=</span> self<span class="token punctuation">.</span>conv3<span class="token punctuation">(</span>h<span class="token punctuation">,</span> edge_index<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> h
+
+    <span class="token keyword">def</span> <span class="token function">reset</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>conv1<span class="token punctuation">.</span>reset_parameters<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>conv2<span class="token punctuation">.</span>reset_parameters<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>conv3<span class="token punctuation">.</span>reset_parameters<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h2><p>训练步骤和常规的深度学习网络（如MLP、卷积神经网络等）的训练流程上是一致的，但是有以下几点需要注意。</p>
+<ul>
+<li>最重要的是和x一起输入模型前向传播的既可以是邻接矩阵也可以是边的索引，显然后者数据量更小更合适。</li>
+<li>评估采用AUC，即通过对ROC曲线下各部分的面积求和而得。其中ROC曲线的横坐标是伪阳性率FP（也叫假正类率，False Positive Rate），纵坐标是真阳性率TP（真正类率，True Positive Rate）。</li>
+<li>计算损失时一定要使用mask去访问训练集部分的节点，否则模型会找到标号为-100的测试集无法计算，而且验证集的节点也不应该被模型学到。</li>
+<li>验证时，由于之前前向传播输入了整个图，所以只需要也通过mask访问验证集获得结果即可，此时模型进入评估状态，不会更新参数。</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">train</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span> model<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    model<span class="token punctuation">.</span>reset<span class="token punctuation">(</span><span class="token punctuation">)</span>       <span class="token comment" spellcheck="true"># 重置参数</span>
+    optimizer <span class="token operator">=</span> torch<span class="token punctuation">.</span>optim<span class="token punctuation">.</span>Adam<span class="token punctuation">(</span>model<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> lr<span class="token operator">=</span><span class="token number">0.01</span><span class="token punctuation">)</span>       <span class="token comment" spellcheck="true"># 优化器</span>
+    scheduler <span class="token operator">=</span> torch<span class="token punctuation">.</span>optim<span class="token punctuation">.</span>lr_scheduler<span class="token punctuation">.</span>ReduceLROnPlateau<span class="token punctuation">(</span>optimizer<span class="token punctuation">,</span> mode<span class="token operator">=</span><span class="token string">'min'</span><span class="token punctuation">,</span> patience<span class="token operator">=</span><span class="token number">6</span><span class="token punctuation">,</span> factor<span class="token operator">=</span><span class="token number">0.5</span><span class="token punctuation">,</span> verbose<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+    loss_fn <span class="token operator">=</span> nn<span class="token punctuation">.</span>CrossEntropyLoss<span class="token punctuation">(</span><span class="token punctuation">)</span>         <span class="token comment" spellcheck="true"># 交叉熵损失</span>
+    min_valid_loss <span class="token operator">=</span> <span class="token number">1e8</span>
+
+    train_mask <span class="token operator">=</span> data<span class="token punctuation">.</span>train_mask            <span class="token comment" spellcheck="true"># 训练数据掩码</span>
+
+    features <span class="token operator">=</span> data<span class="token punctuation">.</span>x<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+    labels <span class="token operator">=</span> data<span class="token punctuation">.</span>y<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+    adj <span class="token operator">=</span> data<span class="token punctuation">.</span>adj_t<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>             <span class="token comment" spellcheck="true"># 邻接矩阵（可以代替edge输入到模型，模型也会识别）</span>
+    edge <span class="token operator">=</span> data<span class="token punctuation">.</span>edge_index<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>       <span class="token comment" spellcheck="true"># 边</span>
+
+    eval_metric <span class="token operator">=</span> <span class="token string">'auc'</span>                     <span class="token comment" spellcheck="true"># 使用AUC衡量指标</span>
+    evaluator <span class="token operator">=</span> Evaluator<span class="token punctuation">(</span>eval_metric<span class="token punctuation">)</span>      <span class="token comment" spellcheck="true"># 评估器</span>
+    <span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">500</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        model<span class="token punctuation">.</span>train<span class="token punctuation">(</span><span class="token punctuation">)</span>                       <span class="token comment" spellcheck="true"># 训练环节</span>
+        out <span class="token operator">=</span> model<span class="token punctuation">(</span>features<span class="token punctuation">,</span> edge<span class="token punctuation">)</span>
+
+        loss <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>out<span class="token punctuation">[</span>train_mask<span class="token punctuation">]</span><span class="token punctuation">,</span> labels<span class="token punctuation">[</span>train_mask<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># Compute accuracy on training/validation/test</span>
+        optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">with</span> torch<span class="token punctuation">.</span>no_grad<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>               <span class="token comment" spellcheck="true"># 验证环节</span>
+            model<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            losses<span class="token punctuation">,</span> eval_results <span class="token operator">=</span> dict<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> dict<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">for</span> key <span class="token keyword">in</span> <span class="token punctuation">[</span><span class="token string">'train'</span><span class="token punctuation">,</span> <span class="token string">'valid'</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+                node_id <span class="token operator">=</span> split_idx<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+                <span class="token comment" spellcheck="true"># out = model(features, edge)</span>
+                y_pred <span class="token operator">=</span> out<span class="token punctuation">.</span>exp<span class="token punctuation">(</span><span class="token punctuation">)</span>          <span class="token comment" spellcheck="true"># 分类概率</span>
+                losses<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>out<span class="token punctuation">[</span>node_id<span class="token punctuation">]</span><span class="token punctuation">,</span> labels<span class="token punctuation">[</span>node_id<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>item<span class="token punctuation">(</span><span class="token punctuation">)</span>
+                eval_results<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> evaluator<span class="token punctuation">.</span>eval<span class="token punctuation">(</span>labels<span class="token punctuation">[</span>node_id<span class="token punctuation">]</span><span class="token punctuation">,</span> y_pred<span class="token punctuation">[</span>node_id<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">[</span>eval_metric<span class="token punctuation">]</span>
+
+        scheduler<span class="token punctuation">.</span>step<span class="token punctuation">(</span>losses<span class="token punctuation">[</span><span class="token string">'valid'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>     <span class="token comment" spellcheck="true"># 学习率下降策略</span>
+        train_eval<span class="token punctuation">,</span> valid_eval <span class="token operator">=</span> eval_results<span class="token punctuation">[</span><span class="token string">'train'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> eval_results<span class="token punctuation">[</span><span class="token string">'valid'</span><span class="token punctuation">]</span>
+        train_loss<span class="token punctuation">,</span> valid_loss <span class="token operator">=</span> losses<span class="token punctuation">[</span><span class="token string">'train'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> losses<span class="token punctuation">[</span><span class="token string">'valid'</span><span class="token punctuation">]</span>
+        <span class="token keyword">if</span> valid_loss <span class="token operator">&lt;</span> min_valid_loss<span class="token punctuation">:</span>
+            min_valid_loss <span class="token operator">=</span> valid_loss
+            torch<span class="token punctuation">.</span>save<span class="token punctuation">(</span>model<span class="token punctuation">.</span>state_dict<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> save_dir<span class="token operator">+</span><span class="token string">'/model.pt'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 最优模型保存</span>
+
+        <span class="token keyword">if</span> epoch <span class="token operator">%</span> <span class="token number">5</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Epoch: {epoch:02d}, '</span>
+                  f<span class="token string">'Loss: {loss:.4f}, '</span>
+                  f<span class="token string">'Train: {100 * train_eval:.3f}, '</span> <span class="token comment" spellcheck="true"># 我们将AUC（百分制）</span>
+                  f<span class="token string">'Valid: {100 * valid_eval:.3f} '</span><span class="token punctuation">)</span>
+
+model <span class="token operator">=</span> SAGE<span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">128</span><span class="token punctuation">,</span> nlabels<span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+train<span class="token punctuation">(</span>data<span class="token punctuation">,</span> model<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>训练过程记录如下图，是纵轴值是AUC*100后的分数，可以看到过拟合状况不算很明显，收敛较为平滑。<br><img src="/2024/09/26/%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E9%87%91%E8%9E%8D%E5%BC%82%E5%B8%B8%E6%A3%80%E6%B5%8B/%E8%AE%AD%E7%BB%83%E6%9B%B2%E7%BA%BF.png" alt="训练曲线"></p>
+<h2 id="预测"><a href="#预测" class="headerlink" title="预测"></a>预测</h2><p>由于测试系统用的是CPU进行预测，资源相当有限，而题目又要求预测是对每个节点逐个预测，也就是如果有数万个测试节点，就需要调用数万次predict函数，这意味着常规预测下要将整个图的x和边输入到模型数万次，将是相当夸张的时间开销。所以本次测试采用的是在训练完之后调用最优模型，将整个图在设备上提前进行一次推理，得到的结果保存在pt文件当中，上传pt文件：</p>
+<pre class="line-numbers language-python"><code class="language-python">model <span class="token operator">=</span> SAGE<span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">128</span><span class="token punctuation">,</span> nlabels<span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>load_state_dict<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token string">'./results/model.pt'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">with</span> torch<span class="token punctuation">.</span>no_grad<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    model<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    out <span class="token operator">=</span> model<span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">,</span> data<span class="token punctuation">.</span>edge_index<span class="token punctuation">)</span>
+    y_pred <span class="token operator">=</span> out<span class="token punctuation">.</span>exp<span class="token punctuation">(</span><span class="token punctuation">)</span>
+torch<span class="token punctuation">.</span>save<span class="token punctuation">(</span>y_pred<span class="token punctuation">,</span> <span class="token string">'pred_result.pt'</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>预测时只要以如下按节点索引访问数据即可，只需要读取一次文件，每次预测节点只要从pred张量中访问对应预测结果即可，将测试速度降低到极致。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> utils<span class="token punctuation">.</span>evaluator <span class="token keyword">import</span> Evaluator
+<span class="token keyword">import</span> torch
+<span class="token keyword">import</span> torch<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>functional <span class="token keyword">as</span> F
+<span class="token keyword">import</span> torch<span class="token punctuation">.</span>nn <span class="token keyword">as</span> nn
+<span class="token keyword">from</span> torch_geometric<span class="token punctuation">.</span>nn <span class="token keyword">import</span> GATConv<span class="token punctuation">,</span> GCNConv<span class="token punctuation">,</span> SAGEConv
+
+pred <span class="token operator">=</span> torch<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token string">'./pred_result.pt'</span><span class="token punctuation">,</span> map_location<span class="token operator">=</span>torch<span class="token punctuation">.</span>device<span class="token punctuation">(</span><span class="token string">'cpu'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>     <span class="token comment" spellcheck="true"># 直接读取一次</span>
+<span class="token keyword">def</span> <span class="token function">predict</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span>node_id<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 模型预测时，测试数据已经进行了归一化处理</span>
+    y_pred <span class="token operator">=</span> pred<span class="token punctuation">[</span>node_id<span class="token punctuation">]</span>              <span class="token comment" spellcheck="true"># 根据索引快速访问结果</span>
+    <span class="token keyword">return</span> y_pred
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>测试得到0.754的评分，相当可以。<br><img src="/2024/09/26/%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E9%87%91%E8%9E%8D%E5%BC%82%E5%B8%B8%E6%A3%80%E6%B5%8B/%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C.png" alt="测试结果"></p>
+<ul>
+<li>当然，这里也提供常规预测的方法供参考：</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true">## 生成 main.py 时请勾选此 cell</span>
+<span class="token keyword">def</span> <span class="token function">predict</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span>node_id<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
+    加载模型和模型预测
+    :param node_id: int, 需要进行预测节点的下标
+    :return: tensor, 类0以及类1的概率, torch.size[1,2]
+    """</span>
+    model <span class="token operator">=</span> SAGE<span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">128</span><span class="token punctuation">,</span> nlabels<span class="token punctuation">)</span>
+    model<span class="token punctuation">.</span>load_state_dict<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token string">'./results/model.pt'</span><span class="token punctuation">,</span> map_location<span class="token operator">=</span>torch<span class="token punctuation">.</span>device<span class="token punctuation">(</span><span class="token string">'cpu'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 模型预测时，测试数据已经进行了归一化处理</span>
+    <span class="token comment" spellcheck="true"># -------------------------- 实现模型预测部分的代码 ---------------------------</span>
+    <span class="token keyword">with</span> torch<span class="token punctuation">.</span>no_grad<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        model<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        out <span class="token operator">=</span> model<span class="token punctuation">(</span>data<span class="token punctuation">.</span>x<span class="token punctuation">,</span> data<span class="token punctuation">.</span>edge_index<span class="token punctuation">)</span>
+        y_pred <span class="token operator">=</span> out<span class="token punctuation">.</span>exp<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span>node_id<span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># (N,num_classes)</span>
+
+    <span class="token keyword">return</span> y_pred
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://legendleochen.top/2024/09/26/%E5%9F%BA%E4%BA%8E%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E7%9A%84%E9%87%91%E8%9E%8D%E5%BC%82%E5%B8%B8%E6%A3%80%E6%B5%8B/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/" rel="tag">Python</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Pytorch/" rel="tag">Pytorch</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%9B%BE%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">图神经网络</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" rel="tag">神经网络</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+    
+      <a href="/2024/09/26/%E5%9F%BA%E4%BA%8EDQN%E7%9A%84%E6%9C%BA%E5%99%A8%E4%BA%BA%E8%87%AA%E5%8A%A8%E8%B5%B0%E8%BF%B7%E5%AE%AB/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">基于DQN的机器人自动走迷宫</div>
+      </a>
+    
+  </nav>
+
+  
+   
+  
+    
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2023-2024
+        <i class="ri-heart-fill heart_icon"></i> LegendLeo Chen
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+        
+        <span>
+  <span><i class="ri-user-3-fill"></i>访问人数:<span id="busuanzi_value_site_uv"></span></span>
+  <span class="division">|</span>
+  <span><i class="ri-eye-fill"></i>浏览次数:<span id="busuanzi_value_page_pv"></span></span>
+</span>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/mylogo.png" alt="LegendLeo Chen 的空间"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">🚀主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">💾归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">🧭分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">🏷️标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">🛸关于</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/analytics">📊统计</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/secret">🔐秘密</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.staticfile.org/jquery-modal/0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.staticfile.org/jquery-modal/0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.staticfile.org/justifiedGallery/3.8.1/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.staticfile.org/photoswipe/4.1.3/default-skin/default-skin.min.css">
+<script src="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe.min.js"></script>
+<script src="https://cdn.staticfile.org/photoswipe/4.1.3/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+ 
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+ 
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="https://cdn.staticfile.org/clipboard.js/2.0.10/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    <div id="music">
+    
+    
+    
+    <iframe frameborder="no" border="1" marginwidth="0" marginheight="0" width="200" height="52"
+        src="//music.163.com/outchain/player?type=2&id=1491212&auto=1&height=32"></iframe>
+</div>
+
+<style>
+    #music {
+        position: fixed;
+        right: 15px;
+        bottom: 0;
+        z-index: 998;
+    }
+</style>
+    
+    
+
+  </div>
+  <!-- 背景气泡 -->
+  <!--
+  <div class="balls-container">
+    <div class="balls-particles">
+      <span style="--i:11;"></span>
+      <span style="--i:12;"></span>
+      <span style="--i:24;"></span>
+      <span style="--i:10;"></span>
+      <span style="--i:14;"></span>
+      <span style="--i:23;"></span>
+      <span style="--i:18;"></span>
+      <span style="--i:16;"></span>
+      <span style="--i:19;"></span>
+      <span style="--i:20;"></span>
+      <span style="--i:22;"></span>
+      <span style="--i:25;"></span>
+      <span style="--i:18;"></span>
+      <span style="--i:21;"></span>
+      <span style="--i:13;"></span>
+      <span style="--i:15;"></span>
+      <span style="--i:26;"></span>
+      <span style="--i:17;"></span>
+      <span style="--i:13;"></span>
+      <span style="--i:26;"></span>
+      <span style="--i:28;"></span>
+      <span style="--i:11;"></span>
+      <span style="--i:12;"></span>
+      <span style="--i:24;"></span>
+      <span style="--i:10;"></span>
+      <span style="--i:14;"></span>
+      <span style="--i:23;"></span>
+      <span style="--i:18;"></span>
+      <span style="--i:16;"></span>
+      <span style="--i:19;"></span>
+      <span style="--i:20;"></span>
+      <span style="--i:22;"></span>
+      <span style="--i:25;"></span>
+      <span style="--i:18;"></span>
+      <span style="--i:21;"></span>
+      <span style="--i:13;"></span>
+      <span style="--i:15;"></span>
+      <span style="--i:26;"></span>
+      <span style="--i:17;"></span>
+      <span style="--i:13;"></span>
+      <span style="--i:26;"></span>
+      <span style="--i:28;"></span>
+    </div>
+  </div>
+  <style>
+    *
+    {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    .balls-container
+    { 
+      position: fixed;
+      top: 0px;
+      left: 0px;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      opacity: 0.3;
+    }
+    
+    .balls-particles
+    {
+      position: fixed;
+      display: flex;
+      z-index: 3;
+      padding: 0 20px;
+    }
+    
+    .balls-particles span
+    {
+      position: relative;
+      bottom: 30px;
+      width: 30px;
+      height: 30px;
+      background-color: #4fc3dc;
+      box-shadow: 0 0 0 10px #4fc3dc44,
+      0 0 50px #4fc3dc,
+      -100px 0 #4fc3dc99,
+      100px 0 #ff2d7599;
+      margin: 0 4px;
+      border-radius: 50%;
+      animation: animate 15s ease infinite;
+      animation-delay: calc(125s / var(--i));
+      transform: translateY(120vh);
+    }
+    .balls-particles span:nth-child(even) {
+      background-color: #ff2d75;
+      box-shadow: 0 0 0 10px #ff267544,
+      0 0 50px #ff2d75,
+      -100px 0 #4fc3dc99,
+      100px 0 #4fc3dc99;
+      ;
+    }
+    
+    @keyframes animate {
+      0%
+      {
+        transform: translateY(120vh) scale(0) rotate(0deg);
+      }
+      20%
+      {
+        transform: translateY(100vh) scale(1) rotate(0deg);
+      }
+      100%
+      {
+        transform: translateY(-50vh) scale(0.5) rotate(360deg);
+      }
+    }
+  </style> -->
+  <!-- 地月系统 -->
+  <!-- <div class="earth-container" >
+    <div class="planet"></div>
+    <div class="satellite"></div>
+   </div>
+   <style>
+    *{
+      padding: 0;
+      margin: 0;
+      }
+      .earth-container {
+        width: 36.25em;
+        height: 36.25em;
+        position: absolute;
+        top:5%;
+        left: 93%;
+        transform: translate(-50%, -50%);
+        opacity: 0.3;
+      }
+      
+      .planet{
+        width: 15.62*3em;
+        height: 15.62*3em;
+        background-color: #02c0f5;
+        border-radius: 50%;
+        position: absolute;
+        margin: auto;
+        top:0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+      }
+      
+      .planet::before{
+        content: '';
+        width: 4em;
+        height: 4em;
+        background-color: #008fd6;
+        position: absolute;
+        top:10em;
+        left: 8em;
+        border-radius: 50%; 
+        box-shadow: 15em 15em 0 2em #00d68b, 5em 8em 0 3em #10ade1;
+      }
+      
+      .satellite{
+        width: 5em;
+        height: 5em;
+        background-color: #dee517;
+        border-radius: 50%;
+        position: relative;
+        left: -5em;
+        bottom: -30em;
+        animation: spin 5s infinite;
+        z-index: 1;
+      }
+      
+      @keyframes spin {
+        49%{
+          z-index: 1;
+        }
+        50%{
+          bottom: 3em;
+          left: 35em;
+          z-index: -1;
+        }
+        100%{
+          z-index: -1;
+        }
+      }
+    </style> -->
+<!-- 三角彩带背景 -->
+  <canvas id="evanyou-canvas" style="opacity: 0.3; position: fixed; top: 0px; left: 0px; z-index: -1; width: 100%; height: 100%; pointer-events: none;"></canvas>
+  <script src="https://cdn.jsdelivr.net/gh/XXXZhy/Blog_Image/js/evanyou_canvas.js"></script>
+</body>
+
+</html>
