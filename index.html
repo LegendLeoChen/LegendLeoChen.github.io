@@ -50,7 +50,7 @@
 <!-- jquery，懒加载、统计、说说需要的jquery -->
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
-<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"><link rel="stylesheet" type="text/css" href="/assets/css/DPlayer.min.css"><script src="/assets/js/DPlayer.min.js"></script></head>
+<link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
   </html>
 </html>
 
@@ -186,6 +186,70 @@
     
     
     <article
+  id="post-Hexo搭建"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/2023/03/02/Hexo%E6%90%AD%E5%BB%BA/"
+    >Hexo搭建
+  <i class="article-topping">置顶</i>
+</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/2023/03/02/Hexo%E6%90%AD%E5%BB%BA/" class="article-date">
+  <time datetime="2023-03-02T04:54:21.000Z" itemprop="datePublished">2023-03-02</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%95%99%E7%A8%8B/">教程</a>
+  </div>
+   
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h1 id="安装软件"><a href="#安装软件" class="headerlink" title="安装软件"></a>安装软件</h1><h2 id="安装git"><a href="#安装git" class="headerlink" title="安装git"></a>安装git</h2><blockquote>
+<ul>
+<li>官网下载git，确定好安装位置，无脑下一步即可。</li>
+<li>完成后右键菜单将出现 <em>Git GUI</em> 和 <em>Git Bash</em> 两个新选项</li>
+</ul>
+</blockquote> 
+      <a class="article-more-link" href="/2023/03/02/Hexo%E6%90%AD%E5%BB%BA/"
+        >阅读更多...</a
+      >
+       
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hexo/" rel="tag">Hexo</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+   
+  
+</article>
+
+    
+    <article
   id="post-使用语音识别结合大模型实现命令分类"
   class="article article-type-post"
   itemscope
@@ -220,257 +284,11 @@
   <ul>
 <li>之前用ESP32实现过用百度千帆模型进行大模型对话的功能，这次使用Python实现，并先通过麦克风输入语音，实现语音识别，再通过API调用大模型进行对话，这次让通过提示性内容引导模型输出分类，也就是完成简单的分类任务。<blockquote>
 <p>可参考的链接：</p>
-<a href="/2024/01/15/ESP32%E8%81%8A%E5%A4%A9%E5%8A%A9%E6%89%8B%E2%80%94%E2%80%94%E6%96%87%E5%BF%83%E4%B8%80%E8%A8%80/" title="ESP32聊天助手——文心一言">ESP32实现的文本对话——基于文心一言</a></blockquote>
-</li>
-</ul>
-<h1 id="🔥文本分类"><a href="#🔥文本分类" class="headerlink" title="🔥文本分类"></a>🔥文本分类</h1><p>这部分跟“<a href="/2024/01/15/ESP32%E8%81%8A%E5%A4%A9%E5%8A%A9%E6%89%8B%E2%80%94%E2%80%94%E6%96%87%E5%BF%83%E4%B8%80%E8%A8%80/" title="ESP32聊天助手——文心一言">ESP32实现的文本对话——基于文心一言</a>”这项工作内容一致，只不过这次代码用的Python，所以创建应用、调试API等先行工作就请跳转查看。<br>Python代码如下：</p>
-<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> requests
-<span class="token keyword">import</span> json
-
-<span class="token keyword">def</span> <span class="token function">classify</span><span class="token punctuation">(</span>words<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token comment" spellcheck="true"># 替换为你的实际访问令牌</span>
-    access_token <span class="token operator">=</span> <span class="token string">"你的百度令牌"</span>
-    url <span class="token operator">=</span> f<span class="token string">"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions?access_token={access_token}"</span>
-    <span class="token comment" spellcheck="true"># 定义要发送的消息</span>
-    payload <span class="token operator">=</span> json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span><span class="token punctuation">{</span>
-        <span class="token string">"messages"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
-            <span class="token punctuation">{</span>
-                <span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span>
-                <span class="token string">"content"</span><span class="token punctuation">:</span> f<span class="token string">'这是列表[长方体,球体,圆柱]，我向你发送一句话，判断语句和列表哪一项最符合，你只要回答一个数字，这个数字就是这个列表中元素对应的索引，接下来请听话：{words}'</span>
-            <span class="token punctuation">}</span>
-        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token string">"temperature"</span><span class="token punctuation">:</span> <span class="token number">0.95</span><span class="token punctuation">,</span>
-        <span class="token string">"top_p"</span><span class="token punctuation">:</span> <span class="token number">0.8</span><span class="token punctuation">,</span>
-        <span class="token string">"penalty_score"</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
-        <span class="token string">"enable_system_memory"</span><span class="token punctuation">:</span> <span class="token boolean">False</span><span class="token punctuation">,</span>
-        <span class="token string">"disable_search"</span><span class="token punctuation">:</span> <span class="token boolean">False</span><span class="token punctuation">,</span>
-        <span class="token string">"enable_citation"</span><span class="token punctuation">:</span> <span class="token boolean">False</span><span class="token punctuation">,</span>
-        <span class="token string">"response_format"</span><span class="token punctuation">:</span> <span class="token string">"text"</span>
-    <span class="token punctuation">}</span><span class="token punctuation">)</span>
-    headers <span class="token operator">=</span> <span class="token punctuation">{</span>
-        <span class="token string">'Content-Type'</span><span class="token punctuation">:</span> <span class="token string">'application/json'</span>
-    <span class="token punctuation">}</span>
-    <span class="token keyword">try</span><span class="token punctuation">:</span>
-        <span class="token comment" spellcheck="true"># 发送POST请求</span>
-        response <span class="token operator">=</span> requests<span class="token punctuation">.</span>post<span class="token punctuation">(</span>url<span class="token punctuation">,</span> headers<span class="token operator">=</span>headers<span class="token punctuation">,</span> data<span class="token operator">=</span>payload<span class="token punctuation">)</span>
-        <span class="token comment" spellcheck="true"># 检查响应状态码</span>
-        <span class="token keyword">if</span> response<span class="token punctuation">.</span>status_code <span class="token operator">==</span> <span class="token number">200</span><span class="token punctuation">:</span>
-            <span class="token comment" spellcheck="true"># 打印返回的结果</span>
-            response_data <span class="token operator">=</span> response<span class="token punctuation">.</span>json<span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"回答:"</span><span class="token punctuation">,</span> response_data<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'result'</span><span class="token punctuation">,</span> <span class="token string">'没有返回结果'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-        <span class="token keyword">else</span><span class="token punctuation">:</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"请求失败，状态码: {response.status_code}，错误信息: {response.text}"</span><span class="token punctuation">)</span>
-    <span class="token keyword">except</span> Exception <span class="token keyword">as</span> e<span class="token punctuation">:</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"发生异常: {e}"</span><span class="token punctuation">)</span>
-
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
-    classify<span class="token punctuation">(</span><span class="token string">"给我一个长方体"</span><span class="token punctuation">)</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>这里实现了通过令牌调用API，输入一句话并根据提示性语句，让模型仅回答一个数字，作为分类列表“长方体,球体,圆柱”中元素的索引，我们后续可以将输出接到目标检测网络等算法上，让它有目标地识别并输出位置框（本文不介绍）。</p>
-<h1 id="🔥语音识别"><a href="#🔥语音识别" class="headerlink" title="🔥语音识别"></a>🔥语音识别</h1><ul>
-<li><p>该环节使用讯飞的语音识别（流式版）<a target="_blank" rel="noopener" href="https://www.xfyun.cn/services/voicedictation%EF%BC%9A">https://www.xfyun.cn/services/voicedictation：</a><br><img src="/2024/10/07/%E4%BD%BF%E7%94%A8%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB%E7%BB%93%E5%90%88%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E7%8E%B0%E5%91%BD%E4%BB%A4%E5%88%86%E7%B1%BB/%E8%AE%AF%E9%A3%9E%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB%E4%B8%BB%E9%A1%B5.jpg" alt="讯飞语音识别主页"></p>
-</li>
-<li><p>点击<em>免费试用</em>，就可以看到应用界面：<br><img src="/2024/10/07/%E4%BD%BF%E7%94%A8%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB%E7%BB%93%E5%90%88%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E7%8E%B0%E5%91%BD%E4%BB%A4%E5%88%86%E7%B1%BB/%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB%E5%BA%94%E7%94%A8%E7%95%8C%E9%9D%A2.jpg" alt="语音识别应用界面"></p>
-</li>
-<li><p>右上角就是和百度千帆的API一样有ID、Key、Secret，这里就不多赘述了。</p>
-</li>
-<li><p>在刚才的主页点击<em>技术文档</em>就可以在文档里面找到下载demo的地方，可以根据其示例进行改进：<br><img src="/2024/10/07/%E4%BD%BF%E7%94%A8%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB%E7%BB%93%E5%90%88%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E7%8E%B0%E5%91%BD%E4%BB%A4%E5%88%86%E7%B1%BB/%E7%A4%BA%E4%BE%8B%E4%B8%8B%E8%BD%BD.jpg" alt="示例下载"></p>
-</li>
-<li><p>接下来直接展示最后的代码，而非示例：</p>
-</li>
-</ul>
-<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> pyaudio
-<span class="token keyword">import</span> wave
-<span class="token keyword">import</span> websocket
-<span class="token keyword">import</span> datetime
-<span class="token keyword">import</span> hashlib
-<span class="token keyword">import</span> base64
-<span class="token keyword">import</span> hmac
-<span class="token keyword">import</span> json
-<span class="token keyword">from</span> urllib<span class="token punctuation">.</span>parse <span class="token keyword">import</span> urlencode
-<span class="token keyword">import</span> time
-<span class="token keyword">import</span> ssl
-<span class="token keyword">from</span> wsgiref<span class="token punctuation">.</span>handlers <span class="token keyword">import</span> format_date_time
-<span class="token keyword">from</span> datetime <span class="token keyword">import</span> datetime
-<span class="token keyword">from</span> time <span class="token keyword">import</span> mktime
-<span class="token keyword">import</span> _thread <span class="token keyword">as</span> thread
-<span class="token keyword">import</span> keyboard  <span class="token comment" spellcheck="true"># 用于捕捉键盘输入</span>
-
-<span class="token keyword">from</span> word_classify <span class="token keyword">import</span> classify
-
-STATUS_FIRST_FRAME <span class="token operator">=</span> <span class="token number">0</span>  <span class="token comment" spellcheck="true"># 第一帧的标识</span>
-STATUS_CONTINUE_FRAME <span class="token operator">=</span> <span class="token number">1</span>  <span class="token comment" spellcheck="true"># 中间帧标识</span>
-STATUS_LAST_FRAME <span class="token operator">=</span> <span class="token number">2</span>  <span class="token comment" spellcheck="true"># 最后一帧的标识</span>
-
-<span class="token keyword">class</span> <span class="token class-name">Ws_Param</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token comment" spellcheck="true"># 初始化</span>
-    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> APPID<span class="token punctuation">,</span> APIKey<span class="token punctuation">,</span> APISecret<span class="token punctuation">,</span> AudioFile<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        self<span class="token punctuation">.</span>APPID <span class="token operator">=</span> APPID
-        self<span class="token punctuation">.</span>APIKey <span class="token operator">=</span> APIKey
-        self<span class="token punctuation">.</span>APISecret <span class="token operator">=</span> APISecret
-        self<span class="token punctuation">.</span>AudioFile <span class="token operator">=</span> AudioFile
-
-        <span class="token comment" spellcheck="true"># 公共参数(common)</span>
-        self<span class="token punctuation">.</span>CommonArgs <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"app_id"</span><span class="token punctuation">:</span> self<span class="token punctuation">.</span>APPID<span class="token punctuation">}</span>
-        <span class="token comment" spellcheck="true"># 业务参数(business)，更多个性化参数可在官网查看</span>
-        self<span class="token punctuation">.</span>BusinessArgs <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"domain"</span><span class="token punctuation">:</span> <span class="token string">"iat"</span><span class="token punctuation">,</span> <span class="token string">"language"</span><span class="token punctuation">:</span> <span class="token string">"zh_cn"</span><span class="token punctuation">,</span> <span class="token string">"accent"</span><span class="token punctuation">:</span> <span class="token string">"mandarin"</span><span class="token punctuation">,</span> <span class="token string">"vinfo"</span><span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token string">"vad_eos"</span><span class="token punctuation">:</span><span class="token number">10000</span><span class="token punctuation">}</span>
-
-    <span class="token comment" spellcheck="true"># 生成url</span>
-    <span class="token keyword">def</span> <span class="token function">create_url</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        url <span class="token operator">=</span> <span class="token string">'wss://ws-api.xfyun.cn/v2/iat'</span>
-        <span class="token comment" spellcheck="true"># 生成RFC1123格式的时间戳</span>
-        now <span class="token operator">=</span> datetime<span class="token punctuation">.</span>now<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        date <span class="token operator">=</span> format_date_time<span class="token punctuation">(</span>mktime<span class="token punctuation">(</span>now<span class="token punctuation">.</span>timetuple<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-        <span class="token comment" spellcheck="true"># 拼接字符串</span>
-        signature_origin <span class="token operator">=</span> <span class="token string">"host: "</span> <span class="token operator">+</span> <span class="token string">"ws-api.xfyun.cn"</span> <span class="token operator">+</span> <span class="token string">"\n"</span>
-        signature_origin <span class="token operator">+=</span> <span class="token string">"date: "</span> <span class="token operator">+</span> date <span class="token operator">+</span> <span class="token string">"\n"</span>
-        signature_origin <span class="token operator">+=</span> <span class="token string">"GET "</span> <span class="token operator">+</span> <span class="token string">"/v2/iat "</span> <span class="token operator">+</span> <span class="token string">"HTTP/1.1"</span>
-        <span class="token comment" spellcheck="true"># 进行hmac-sha256进行加密</span>
-        signature_sha <span class="token operator">=</span> hmac<span class="token punctuation">.</span>new<span class="token punctuation">(</span>self<span class="token punctuation">.</span>APISecret<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> signature_origin<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-                                 digestmod<span class="token operator">=</span>hashlib<span class="token punctuation">.</span>sha256<span class="token punctuation">)</span><span class="token punctuation">.</span>digest<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        signature_sha <span class="token operator">=</span> base64<span class="token punctuation">.</span>b64encode<span class="token punctuation">(</span>signature_sha<span class="token punctuation">)</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span>encoding<span class="token operator">=</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span>
-
-        authorization_origin <span class="token operator">=</span> <span class="token string">"api_key=\"%s\", algorithm=\"%s\", headers=\"%s\", signature=\"%s\""</span> <span class="token operator">%</span> <span class="token punctuation">(</span>
-            self<span class="token punctuation">.</span>APIKey<span class="token punctuation">,</span> <span class="token string">"hmac-sha256"</span><span class="token punctuation">,</span> <span class="token string">"host date request-line"</span><span class="token punctuation">,</span> signature_sha<span class="token punctuation">)</span>
-        authorization <span class="token operator">=</span> base64<span class="token punctuation">.</span>b64encode<span class="token punctuation">(</span>authorization_origin<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span>encoding<span class="token operator">=</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span>
-        <span class="token comment" spellcheck="true"># 将请求的鉴权参数组合为字典</span>
-        v <span class="token operator">=</span> <span class="token punctuation">{</span>
-            <span class="token string">"authorization"</span><span class="token punctuation">:</span> authorization<span class="token punctuation">,</span>
-            <span class="token string">"date"</span><span class="token punctuation">:</span> date<span class="token punctuation">,</span>
-            <span class="token string">"host"</span><span class="token punctuation">:</span> <span class="token string">"ws-api.xfyun.cn"</span>
-        <span class="token punctuation">}</span>
-        <span class="token comment" spellcheck="true"># 拼接鉴权参数，生成url</span>
-        url <span class="token operator">=</span> url <span class="token operator">+</span> <span class="token string">'?'</span> <span class="token operator">+</span> urlencode<span class="token punctuation">(</span>v<span class="token punctuation">)</span>
-        <span class="token keyword">return</span> url
-
-<span class="token comment" spellcheck="true"># 收到websocket消息的处理</span>
-<span class="token keyword">def</span> <span class="token function">on_message</span><span class="token punctuation">(</span>ws<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">try</span><span class="token punctuation">:</span>
-        code <span class="token operator">=</span> json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string">"code"</span><span class="token punctuation">]</span>
-        sid <span class="token operator">=</span> json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string">"sid"</span><span class="token punctuation">]</span>
-        <span class="token keyword">if</span> code <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">:</span>
-            errMsg <span class="token operator">=</span> json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string">"message"</span><span class="token punctuation">]</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"sid:%s call error:%s code is:%s"</span> <span class="token operator">%</span> <span class="token punctuation">(</span>sid<span class="token punctuation">,</span> errMsg<span class="token punctuation">,</span> code<span class="token punctuation">)</span><span class="token punctuation">)</span>
-        <span class="token keyword">else</span><span class="token punctuation">:</span>
-            data <span class="token operator">=</span> json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string">"data"</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">"result"</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token string">"ws"</span><span class="token punctuation">]</span>
-            result <span class="token operator">=</span> <span class="token string">""</span>
-            <span class="token keyword">for</span> i <span class="token keyword">in</span> data<span class="token punctuation">:</span>
-                <span class="token keyword">for</span> w <span class="token keyword">in</span> i<span class="token punctuation">[</span><span class="token string">"cw"</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
-                    result <span class="token operator">+=</span> w<span class="token punctuation">[</span><span class="token string">"w"</span><span class="token punctuation">]</span>
-            <span class="token comment" spellcheck="true"># print("sid:%s call success!,data is:%s" % (sid, json.dumps(data, ensure_ascii=False)))</span>
-        <span class="token keyword">if</span> len<span class="token punctuation">(</span>result<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">2</span><span class="token punctuation">:</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span>
-            classify<span class="token punctuation">(</span>result<span class="token punctuation">)</span>
-    <span class="token keyword">except</span> Exception <span class="token keyword">as</span> e<span class="token punctuation">:</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"receive msg,but parse exception:"</span><span class="token punctuation">,</span> e<span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true"># 收到websocket错误的处理</span>
-<span class="token keyword">def</span> <span class="token function">on_error</span><span class="token punctuation">(</span>ws<span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"### error:"</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true"># 收到websocket关闭的处理</span>
-<span class="token keyword">def</span> <span class="token function">on_close</span><span class="token punctuation">(</span>ws<span class="token punctuation">,</span> a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"### closed ###"</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true"># 收到websocket连接建立的处理</span>
-<span class="token keyword">def</span> <span class="token function">on_open</span><span class="token punctuation">(</span>ws<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">def</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token operator">*</span>args<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        frameSize <span class="token operator">=</span> <span class="token number">8000</span>  <span class="token comment" spellcheck="true"># 每一帧的音频大小</span>
-        intervel <span class="token operator">=</span> <span class="token number">0.04</span>  <span class="token comment" spellcheck="true"># 发送音频间隔(单位:s)</span>
-        status <span class="token operator">=</span> STATUS_FIRST_FRAME  <span class="token comment" spellcheck="true"># 音频的状态信息，标识音频是第一帧，还是中间帧、最后一帧</span>
-
-        <span class="token keyword">with</span> open<span class="token punctuation">(</span>wsParam<span class="token punctuation">.</span>AudioFile<span class="token punctuation">,</span> <span class="token string">"rb"</span><span class="token punctuation">)</span> <span class="token keyword">as</span> fp<span class="token punctuation">:</span>
-            <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-                buf <span class="token operator">=</span> fp<span class="token punctuation">.</span>read<span class="token punctuation">(</span>frameSize<span class="token punctuation">)</span>
-                <span class="token keyword">if</span> <span class="token operator">not</span> buf<span class="token punctuation">:</span>
-                    status <span class="token operator">=</span> STATUS_LAST_FRAME
-                <span class="token keyword">if</span> status <span class="token operator">==</span> STATUS_FIRST_FRAME<span class="token punctuation">:</span>
-                    d <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"common"</span><span class="token punctuation">:</span> wsParam<span class="token punctuation">.</span>CommonArgs<span class="token punctuation">,</span>
-                         <span class="token string">"business"</span><span class="token punctuation">:</span> wsParam<span class="token punctuation">.</span>BusinessArgs<span class="token punctuation">,</span>
-                         <span class="token string">"data"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"status"</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token string">"format"</span><span class="token punctuation">:</span> <span class="token string">"audio/L16;rate=16000"</span><span class="token punctuation">,</span>
-                                  <span class="token string">"audio"</span><span class="token punctuation">:</span> str<span class="token punctuation">(</span>base64<span class="token punctuation">.</span>b64encode<span class="token punctuation">(</span>buf<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-                                  <span class="token string">"encoding"</span><span class="token punctuation">:</span> <span class="token string">"raw"</span><span class="token punctuation">}</span><span class="token punctuation">}</span>
-                    d <span class="token operator">=</span> json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>d<span class="token punctuation">)</span>
-                    ws<span class="token punctuation">.</span>send<span class="token punctuation">(</span>d<span class="token punctuation">)</span>
-                    status <span class="token operator">=</span> STATUS_CONTINUE_FRAME
-                <span class="token keyword">elif</span> status <span class="token operator">==</span> STATUS_CONTINUE_FRAME<span class="token punctuation">:</span>
-                    d <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"data"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"status"</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"format"</span><span class="token punctuation">:</span> <span class="token string">"audio/L16;rate=16000"</span><span class="token punctuation">,</span>
-                                  <span class="token string">"audio"</span><span class="token punctuation">:</span> str<span class="token punctuation">(</span>base64<span class="token punctuation">.</span>b64encode<span class="token punctuation">(</span>buf<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-                                  <span class="token string">"encoding"</span><span class="token punctuation">:</span> <span class="token string">"raw"</span><span class="token punctuation">}</span><span class="token punctuation">}</span>
-                    ws<span class="token punctuation">.</span>send<span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>d<span class="token punctuation">)</span><span class="token punctuation">)</span>
-                <span class="token keyword">elif</span> status <span class="token operator">==</span> STATUS_LAST_FRAME<span class="token punctuation">:</span>
-                    d <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"data"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"status"</span><span class="token punctuation">:</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token string">"format"</span><span class="token punctuation">:</span> <span class="token string">"audio/L16;rate=16000"</span><span class="token punctuation">,</span>
-                                  <span class="token string">"audio"</span><span class="token punctuation">:</span> str<span class="token punctuation">(</span>base64<span class="token punctuation">.</span>b64encode<span class="token punctuation">(</span>buf<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-                                  <span class="token string">"encoding"</span><span class="token punctuation">:</span> <span class="token string">"raw"</span><span class="token punctuation">}</span><span class="token punctuation">}</span>
-                    ws<span class="token punctuation">.</span>send<span class="token punctuation">(</span>json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span>d<span class="token punctuation">)</span><span class="token punctuation">)</span>
-                    time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
-                    <span class="token keyword">break</span>
-                time<span class="token punctuation">.</span>sleep<span class="token punctuation">(</span>intervel<span class="token punctuation">)</span>
-        ws<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-    thread<span class="token punctuation">.</span>start_new_thread<span class="token punctuation">(</span>run<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token keyword">def</span> <span class="token function">record_audio</span><span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    FORMAT <span class="token operator">=</span> pyaudio<span class="token punctuation">.</span>paInt16  <span class="token comment" spellcheck="true"># 16-bit 深度</span>
-    CHANNELS <span class="token operator">=</span> <span class="token number">1</span>  <span class="token comment" spellcheck="true"># 单声道</span>
-    RATE <span class="token operator">=</span> <span class="token number">16000</span>  <span class="token comment" spellcheck="true"># 采样率16kHz</span>
-    CHUNK <span class="token operator">=</span> <span class="token number">1024</span>  <span class="token comment" spellcheck="true"># 每个块的帧数</span>
-    frames <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-
-    <span class="token comment" spellcheck="true"># 初始化pyaudio</span>
-    p <span class="token operator">=</span> pyaudio<span class="token punctuation">.</span>PyAudio<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    stream <span class="token operator">=</span> p<span class="token punctuation">.</span>open<span class="token punctuation">(</span>format<span class="token operator">=</span>FORMAT<span class="token punctuation">,</span> channels<span class="token operator">=</span>CHANNELS<span class="token punctuation">,</span> rate<span class="token operator">=</span>RATE<span class="token punctuation">,</span> input<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> frames_per_buffer<span class="token operator">=</span>CHUNK<span class="token punctuation">)</span>
-
-    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"开始录音... 按下 'q' 键停止录音"</span><span class="token punctuation">)</span>
-    <span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
-        data <span class="token operator">=</span> stream<span class="token punctuation">.</span>read<span class="token punctuation">(</span>CHUNK<span class="token punctuation">)</span>
-        frames<span class="token punctuation">.</span>append<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
-        <span class="token keyword">if</span> keyboard<span class="token punctuation">.</span>is_pressed<span class="token punctuation">(</span><span class="token string">'q'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># 检测 'q' 键</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"录音结束"</span><span class="token punctuation">)</span>
-            <span class="token keyword">break</span>
-
-    <span class="token comment" spellcheck="true"># 停止并关闭音频流</span>
-    stream<span class="token punctuation">.</span>stop_stream<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    stream<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    p<span class="token punctuation">.</span>terminate<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-    <span class="token comment" spellcheck="true"># 将录音数据保存为WAV文件</span>
-    <span class="token keyword">with</span> wave<span class="token punctuation">.</span>open<span class="token punctuation">(</span>file_name<span class="token punctuation">,</span> <span class="token string">'wb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> wf<span class="token punctuation">:</span>
-        wf<span class="token punctuation">.</span>setnchannels<span class="token punctuation">(</span>CHANNELS<span class="token punctuation">)</span>
-        wf<span class="token punctuation">.</span>setsampwidth<span class="token punctuation">(</span>p<span class="token punctuation">.</span>get_sample_size<span class="token punctuation">(</span>FORMAT<span class="token punctuation">)</span><span class="token punctuation">)</span>
-        wf<span class="token punctuation">.</span>setframerate<span class="token punctuation">(</span>RATE<span class="token punctuation">)</span>
-        wf<span class="token punctuation">.</span>writeframes<span class="token punctuation">(</span>b<span class="token string">''</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span>frames<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-
-<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
-    audio_file <span class="token operator">=</span> <span class="token string">"output.wav"</span>  <span class="token comment" spellcheck="true"># 输出音频文件名</span>
-    wsParam <span class="token operator">=</span> Ws_Param<span class="token punctuation">(</span>APPID<span class="token operator">=</span><span class="token string">'你的讯飞APPID'</span><span class="token punctuation">,</span> APISecret<span class="token operator">=</span><span class="token string">'你的讯飞APISecret'</span><span class="token punctuation">,</span>
-                       APIKey<span class="token operator">=</span><span class="token string">'你的讯飞APIKey'</span><span class="token punctuation">,</span>
-                       AudioFile<span class="token operator">=</span>audio_file<span class="token punctuation">)</span>
-
-    <span class="token comment" spellcheck="true"># 先录音</span>
-    record_audio<span class="token punctuation">(</span>audio_file<span class="token punctuation">)</span>
-
-    <span class="token comment" spellcheck="true"># 创建WebSocket连接并发送音频</span>
-    websocket<span class="token punctuation">.</span>enableTrace<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
-    wsUrl <span class="token operator">=</span> wsParam<span class="token punctuation">.</span>create_url<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    ws <span class="token operator">=</span> websocket<span class="token punctuation">.</span>WebSocketApp<span class="token punctuation">(</span>wsUrl<span class="token punctuation">,</span> on_message<span class="token operator">=</span>on_message<span class="token punctuation">,</span> on_error<span class="token operator">=</span>on_error<span class="token punctuation">,</span> on_close<span class="token operator">=</span>on_close<span class="token punctuation">)</span>
-    ws<span class="token punctuation">.</span>on_open <span class="token operator">=</span> on_open
-    ws<span class="token punctuation">.</span>run_forever<span class="token punctuation">(</span>sslopt<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"cert_reqs"</span><span class="token punctuation">:</span> ssl<span class="token punctuation">.</span>CERT_NONE<span class="token punctuation">}</span><span class="token punctuation">)</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<ul>
-<li>代码大致流程就是：</li>
-</ul>
-<ol>
-<li>运行脚本后直接进入语音输入状态，用户可以通过麦克风说话，说完的话通过pyaudio、wave等库生成符合API要求的语音文件；</li>
-<li>生成语音文件后，通过WebSocket连接向讯飞服务器发送请求，并等待服务器返回结果，结果实际上是分词发送来的，可以拼接到<code>result</code>变量中；</li>
-<li>接收完全部识别结果后，通过<code>classify</code>函数调用百度千帆的API，对识别结果进行分类，并打印出来。</li>
-</ol>
-<h1 id="🔥结果"><a href="#🔥结果" class="headerlink" title="🔥结果"></a>🔥结果</h1><ul>
-<li>可以看到语言输入被正确识别，并且模型准确返回圆柱所对应的分类索引2<div id="dplayer0" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer0"),"theme":"#FADFA3","loop":true,"video":{"url":"/2024/10/07/使用语音识别结合大模型实现命令分类/结果.mov","pic":"结果展示.jpg"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script></li>
-</ul>
- 
+<a href="/2024/01/15/ESP32%E8%81%8A%E5%A4%A9%E5%8A%A9%E6%89%8B%E2%80%94%E2%80%94%E6%96%87%E5%BF%83%E4%B8%80%E8%A8%80/" title="ESP32聊天助手——文心一言">ESP32实现的文本对话——基于文心一言</a></blockquote></li></ul> 
+      <a class="article-more-link" href="/2024/10/07/%E4%BD%BF%E7%94%A8%E8%AF%AD%E9%9F%B3%E8%AF%86%E5%88%AB%E7%BB%93%E5%90%88%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E7%8E%B0%E5%91%BD%E4%BB%A4%E5%88%86%E7%B1%BB/"
+        >阅读更多...</a
+      >
+       
       <!-- reward -->
       
     </div>
@@ -946,63 +764,6 @@ STATUS_LAST_FRAME <span class="token operator">=</span> <span class="token numbe
 </li>
 <li><p>少部分情况下为了凸显人物主体，或者体现某种特定风格，允许出现过曝（日系风格等）或者欠曝（人物剪影等）</p></li></ul> 
       <a class="article-more-link" href="/2023/11/08/%E6%91%84%E5%BD%B1%E5%89%8D%E6%9C%9F%E5%85%A5%E9%97%A8%EF%BC%883%EF%BC%89/"
-        >阅读更多...</a
-      >
-       
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%91%84%E5%BD%B1/" rel="tag">摄影</a></li></ul>
-
-    </footer>
-  </div>
-
-   
-   
-  
-</article>
-
-    
-    <article
-  id="post-摄影前期入门（2）"
-  class="article article-type-post"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/2023/11/05/%E6%91%84%E5%BD%B1%E5%89%8D%E6%9C%9F%E5%85%A5%E9%97%A8%EF%BC%882%EF%BC%89/"
-    >摄影前期入门（2）</a> 
-</h2>
- 
-
-      
-    </header>
-     
-    <div class="article-meta">
-      <a href="/2023/11/05/%E6%91%84%E5%BD%B1%E5%89%8D%E6%9C%9F%E5%85%A5%E9%97%A8%EF%BC%882%EF%BC%89/" class="article-date">
-  <time datetime="2023-11-05T10:01:12.000Z" itemprop="datePublished">2023-11-05</time>
-</a> 
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%91%84%E5%BD%B1/">摄影</a>
-  </div>
-   
-    </div>
-      
-    <div class="article-entry" itemprop="articleBody">
-       
-  <p>第三节课<br>03 告别说明书，基础相机操作指南 P3 - 15:18</p> 
-      <a class="article-more-link" href="/2023/11/05/%E6%91%84%E5%BD%B1%E5%89%8D%E6%9C%9F%E5%85%A5%E9%97%A8%EF%BC%882%EF%BC%89/"
         >阅读更多...</a
       >
        
