@@ -201,6 +201,313 @@
       </tags>
   </entry>
   <entry>
+    <title>主流大模型技术笔记</title>
+    <url>/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[<p>本文作为笔记，通过阅读论文，记录市面上主流的大模型的技术内容。</p>
+<h1 id="🔥基础预备"><a href="#🔥基础预备" class="headerlink" title="🔥基础预备"></a>🔥基础预备</h1><h2 id="🚢注意力机制"><a href="#🚢注意力机制" class="headerlink" title="🚢注意力机制"></a>🚢注意力机制</h2><span id="more"></span>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6.jpg" alt="注意力机制计算"></p>
+<ul>
+<li>QKV都是输入的矩阵，可以理解为推理时，拿着Q去查找每个词的K，根据QK相似度的不同从而得到一个权重矩阵，再取K对应的V进行矩阵乘法计算。</li>
+<li>多头注意力（MHA）本质上就像CNN里面的多通道，学习不同方面的特征，有多组的QKV经过各自结构一致的网络共同整合得到整个模块的输出。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%90%84%E7%A7%8D%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B.jpg" alt="各种多头注意力"></li>
+<li>多查询注意力机制（MQA）是MHA的变体，所有注意力头直接共享同一组KV，相当于减少了参数。</li>
+<li>组查询注意力（GQA）将MHA和MQA进行折中，也就是若干个头一组共享KV。</li>
+</ul>
+<h2 id="🚢KV-Cache"><a href="#🚢KV-Cache" class="headerlink" title="🚢KV Cache"></a>🚢KV Cache</h2><p>KV Cache是一种优化技术，用于提升模型推理效率，<strong>通过缓存K、V减少重复计算</strong>，从而加速解码器的矩阵运算。DeepSeek里面的MLA等MHA变体都是基于该技术进行改进的。</p>
+<ul>
+<li>KV Cache仅用于推理阶段，该阶段KV保持不变，因此可以缓存；</li>
+<li>KV Cache只存在于解码器，因为解码器生成时需要多次运算矩阵；</li>
+<li>KV Cache因为缓存了KV，会加速Q@K@V的矩阵乘法运算，提高推理速度；</li>
+<li>KV Cache的缺点是会增加内存占用。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E4%B8%8D%E4%BD%BF%E7%94%A8KV_Cache.jpg" alt="不使用KV Cache的注意力"></p>
+<ul>
+<li>如上图，每次自回归时，之前的QKV三者本身的生成、Q与所有K相乘的结果、QKV计算的结果都是要重复计算的，因此会增加推理时间。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/KV_Cache.jpg" alt="KV Cache"></p>
+<ul>
+<li><p>如上图每次自回归时，QK相乘得到结果与V矩阵相乘，紫色部分是过去的K、V，它们本来会被新的K、V所覆盖，但是每一步计算都要用到，需要重新生成，把它们缓存下来就能得到很明显的性能提升。</p>
+</li>
+<li><p><strong>为什么没有Q Cache</strong>，如上图，因为Q每次都是新生成的那个token的Q与所有的K进行相乘，根本用不到之前的Q，也就不用缓存了。</p>
+</li>
+<li><p>QK相乘结果也不缓存，因为过去的QK和Q一样也是不需要用于生成新的token的。</p>
+</li>
+</ul>
+<blockquote>
+<p>由于内存限制，LLM的回复能力确实会随着问答的进行逐渐变差，这种现象可以理解为模型具备一定的“遗忘性”。具体而言，由于硬件资源的限制，KV Cache的大小是有限的。当缓存达到其容量上限时，旧的信息可能会被新的信息覆盖或丢弃。其表现为随着问答的进行，早期的对话内容可能会因为KV Cache的容量限制而被移除或覆盖，导致模型逐渐“遗忘”之前的上下文。由于模型无法访问完整的对话历史，其生成的回复可能会变得不够准确或连贯，尤其是在需要依赖早期信息的情况下。所以，在长对话或多轮问答中，模型的性能可能会显着下降，因为它无法有效地利用整个对话历史。</p>
+</blockquote>
+<h2 id="🚢精度"><a href="#🚢精度" class="headerlink" title="🚢精度"></a>🚢精度</h2><h3 id="FP32-x2F-FP16-x2F-BF16"><a href="#FP32-x2F-FP16-x2F-BF16" class="headerlink" title="FP32&#x2F;FP16&#x2F;BF16"></a>FP32&#x2F;FP16&#x2F;BF16</h3><p>fp32、fp16、bf16分别指单精度浮点数（float32）、Intel提出的半精度浮点数（float16）、nvidia提出的半精度浮点数（bfloat16）。名字当中的数字就对应了该种浮点数表示方法所占的bit数，那么fp16和bp16的存储空间天然就是fp32的一半。</p>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E7%B2%BE%E5%BA%A6%E7%A4%BA%E6%84%8F%E5%9B%BE.jpg" alt="精度示意图"></p>
+<ul>
+<li>以fp16为例，它占有16bit（2字节），其中5bit用来表示指数位（表示2的幂次），10bit用来表示小数位（也叫尾数位，表示浮点数的有效数字部分），还有一个符号位。5个指数位本来可以表示00000-11111，但是全0和全1有特殊含义，换算成10进制也就是1至30，减去偏置15、能表示的正负区间为-14至15，尾数位可以表示1.0000000000至1.1111111111（此时尾数位前的隐藏项为1），换算成10进制也就是[1, 2)。</li>
+<li>指数位全0表示<strong>非规格数</strong>，也就是+0、-0, 以及非常靠近0的数, 比如1E-38。</li>
+<li>指数全1表示<strong>特殊数</strong>，有Inf和NaN两种情况。小数位全0表示无穷大inf，根据符号位不同可以分为+inf和-inf。小数位不全为0，表示NaN。</li>
+<li>规格数和非规格数拼接起来才是一个完整的取值范围。</li>
+<li>所以fp16最大是 二进制 ±1.1111111111×2^11110 &#x3D;&gt; 十进制±(1+1023&#x2F;1024)×2^15 &#x3D; ±65504；最小是1&#x2F;2024×2^(-14) &#x3D; 5.96E−8。也就是fp16的动态范围为（5.96E−8 ~ 65504）</li>
+<li>fp32（8指数+23尾数+1符号）的动态范围为(1.4E-45 ~ 3.40E38)，bf16相当于尾数位为7的fp32，动态范围是（9.2E−41~3.38E38），也就是<strong>牺牲精度换来高取值范围</strong>。</li>
+</ul>
+<h3 id="混合精度"><a href="#混合精度" class="headerlink" title="混合精度"></a>混合精度</h3><p>混合精度就是通过一些设计，使得我们可以享受半精度的优点，又可以一定程度规避数据溢出和舍入误差（超小值被忽略导致误差）。</p>
+<ul>
+<li>我们使用 fp32 权重作为精确的 “主权重 (master weight)”进行备份，而其他所有值（weights，activations， gradients）均使用 fp16 进行计算以提高训练速度，最后在梯度更新阶段再使用半精度的梯度更新单精度的主权重，这样当很小的梯度乘上学习率后要跟权重（fp32的）做运算时，就不会被舍弃了。</li>
+<li>由于 fp16 混合精度大大减少了内存需求, 并可以实现更快的速度, 因此只有在在此训练模式下表现不佳时, 才考虑不使用混合精度训练。</li>
+</ul>
+<h2 id="🚢新的激活函数"><a href="#🚢新的激活函数" class="headerlink" title="🚢新的激活函数"></a>🚢新的激活函数</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E6%96%B0%E7%9A%84%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0.jpg" alt="新的激活函数"><br>下列公式中 σ 即 sigmoid 函数，σ(x) &#x3D; 1 &#x2F; (1 + exp(-x)) 。</p>
+<ol>
+<li>GLU：GLU(x) &#x3D; (xW + b) ⊗ σ(xV + c)；</li>
+<li>Swish：Swish(x) &#x3D; x · σ(x)；</li>
+<li>SwiGLU：SwiGLU(x, W, V, b, c) &#x3D; Swish_1(xW + b) ⊗ (xV + c) ，其中Swish_β(x) &#x3D; x σ(β x)，⊗是哈达玛积（对位元素乘）；<blockquote>
+<p>SwiGLU函数可以提升性能，有可微性、自适应性（因为GLU是一种类似于长短期记忆网络（LSTM）带有门机制的网络结构，通过门机制控制信息通过的比例，来让模型自适应地选择哪些单词和特征对预测下一个词有帮助）。</p>
+</blockquote>
+</li>
+<li>GELU：GELU(x) &#x3D; x · P(X⩽x) &#x3D; x · Φ(x)，其中Φ(x)表示正态分布的累积分布函数。</li>
+</ol>
+<h1 id="🔥Llama3"><a href="#🔥Llama3" class="headerlink" title="🔥Llama3"></a>🔥Llama3</h1><p>论文：<a href="https://ai.meta.com/research/publications/the-llama-3-herd-of-models/">The Llama 3 Herd of Models</a><br>llama3相较于以往，数据量提升了，模型规模也提升了，算法架构并没有很复杂，使用的是标准的稠密的transformer模型，模型性能的提升主要得益于数据集的质量和多样性。</p>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/llama3%E8%A1%A8%E7%8E%B0.jpg" alt="llama3表现"></p>
+<ul>
+<li>表中是llama3基准测试表现，CoT代表回答问题前告诉模型应该怎么做，它和few shot都是llama模型很常用的后训练手段。模型的参数量对其效果的影响还是很大的。</li>
+</ul>
+<h2 id="整体概述"><a href="#整体概述" class="headerlink" title="整体概述"></a>整体概述</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/llama3%E6%9E%B6%E6%9E%84.jpg" alt="llama3架构"><br>模型流程主要分为<strong>预训练</strong>和<strong>后训练</strong>，预训练是让模型能够学会生成下一个token，相当于学会说话，理解语言；后训练则是让模型能够完成任务，在编码、数学等各类领域当中有提升。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/llama%E5%A4%9A%E6%A8%A1%E6%80%81.jpg" alt="llama3多模态"></p>
+<ul>
+<li><strong>多模态编码器</strong>预训练：为图像和语音分别训练编码器，模型学会视觉内容与自然语言描述之间的关系。语音编码器通过自监督方法训练，该方法屏蔽部分语音输入，并通过离散token表示重建被屏蔽的部分，从而使模型学习语音信号的结构。</li>
+<li><strong>视觉适配模块</strong>训练：训练一个adapter，将预训练的图像编码器集成到预训练的语言模型中。adapter由一系列交叉注意力层组成，将图像编码器表示输入到语言模型中。adapter模块在文本-图像对上进行训练，使图像表示与语言表示对齐。在训练adapter时，更新图像编码器的参数的同时冻结语言模型的参数。最后还在视频-文本数据对上训练了一个视频adapter模块，使模型能够跨帧聚合信息。</li>
+<li><strong>语音适配模块</strong>训练：通过一个adapter将语音编码器集成到模型中，将语音编码转换为可以直接输入微调语言模型的token表示。在SFT阶段，adapter模块和编码器的参数共同更新，以实现高质量的语音理解。在训练语音适配模块时，同样冻结语言模型。</li>
+</ul>
+<h2 id="数据处理"><a href="#数据处理" class="headerlink" title="数据处理"></a>数据处理</h2><p>预训练时对数据做了大量工作，包括但不限于：</p>
+<ol>
+<li><strong>数据提取和清洗</strong>，将html通过工具提取内容，对于图像渲染的数学公式等也进行了提取，还发现markdown文本对于训练是有害的，就除去了，还移除了可能有不安全信息的网站；</li>
+<li><strong>数据退火</strong>，将质量好但体量小的数据集用于靠后阶段的训练，能够较好地提升模型（类似于考前背题）；</li>
+<li>使用<strong>启发式算法</strong>过滤数据，用<strong>模型</strong>做质量过滤；</li>
+<li>各种<strong>去重</strong>。</li>
+</ol>
+<h2 id="模型架构"><a href="#模型架构" class="headerlink" title="模型架构"></a>模型架构</h2><p>Llama 3使用了标准的稠密Transformer架构，相较于llama2，llama3的模型架构上有小改动：</p>
+<ol>
+<li><strong>GQA</strong>代替MHA。</li>
+<li>多个无关文档同时训练时，标上<strong>注意力掩码</strong>，在计算注意力时两个文档之间不进行计算。</li>
+<li><strong>扩展词表</strong>，使用128K大小的字典，多语言能力提升，但是这方面依然不如GPT4。</li>
+<li>使用<strong>旋转位置编码RoPE</strong>进行位置编码，RoPE基本频率超参数增加到500,000，这使模型能够更好地支持更长的上下文。</li>
+</ol>
+<h2 id="scaling-law"><a href="#scaling-law" class="headerlink" title="scaling law"></a>scaling law</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/scalinglaw.jpg" alt="scaling law"></p>
+<ul>
+<li>如图，算力增长时，损失是比较接近线性下降的，意味着用小的模型就可以低成本地预测大的模型的效果如何。</li>
+<li>值得注意的是，当模型足够大时（右下角的弧线），曲线更加平滑，意味着此时样本量的影响没有那么大。</li>
+<li>基于scaling law，团队最终决定训练一个405B参数的旗舰模型。</li>
+</ul>
+<h2 id="训练硬件"><a href="#训练硬件" class="headerlink" title="训练硬件"></a>训练硬件</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%9B%9B%E7%A7%8D%E5%B9%B6%E8%A1%8C%E8%AE%AD%E7%BB%83%E6%96%B9%E6%B3%95.jpg" alt="四种并行训练方法"></p>
+<ul>
+<li>为了扩展Llama 3最大模型的训练，团队使用了4D并行方法——结合了四种不同类型的并行方法来分片模型。这种方法有效地将计算任务分布在多个GPU上，并确保每个GPU的模型参数、优化器状态、梯度和激活都能适应其高带宽内存（HBM）。</li>
+</ul>
+<ol>
+<li>张量并行：将单个权重张量分割成多个块并分配到不同的设备上。</li>
+<li>流水线并行：将模型按层垂直分成多个阶段，使得不同的设备可以并行处理完整模型流水线的不同阶段。</li>
+<li>上下文并行：将输入上下文分割成段，减少长序列输入的内存瓶颈。</li>
+<li>完全分片的数据并行（FSDP）：将模型、优化器和梯度分片，同时实现数据并行，即在多个GPU上并行处理数据，并在每个训练步骤后同步。</li>
+</ol>
+<h2 id="训练配方"><a href="#训练配方" class="headerlink" title="训练配方"></a>训练配方</h2><ul>
+<li>预训练Llama 3 405B的配方包括三个主要阶段：（1）初始预训练（2）长上下文预训练（3）退火。</li>
+<li>后训练策略的核心是<strong>奖励模型</strong>和<strong>语言模型</strong>，步骤如下（要按顺序）：<ul>
+<li><strong>RM阶段</strong>：先在预训练检查点上训练一个奖励模型（RM），它会学习如何对回答（偏好数据）采取次序不同的三个响应——（编辑 &gt; 选择 &gt; 拒绝），偏好数据是人工严格标注的；</li>
+<li><strong>SFT阶段</strong>：使用奖励模型对人工标注的提示词进行<strong>拒绝采样</strong>（Rejection sampling，RS），即面对多个答案，RM通过评分函数排序这些答案，过滤掉比较差的答案，生成了新的数据，这些数据被用来微调LLM；</li>
+<li><strong>DPO阶段</strong>：使用<strong>直接偏好优化（DPO）</strong>对SFT模型进行人类偏好对齐。训练时，他们主要使用前几轮对齐中表现最佳模型收集的最新偏好数据，因此训练数据更符合每轮优化的策略模型的分布，DPO效果好过PPO等探索类算法；</li>
+<li>最后，对在每个RM、SFT或DPO阶段使用不同版本的数据或超参数进行实验所获得的模型进行<strong>加权平均</strong>。</li>
+</ul>
+</li>
+</ul>
+<h1 id="🔥ChatGLM"><a href="#🔥ChatGLM" class="headerlink" title="🔥ChatGLM"></a>🔥ChatGLM</h1><p>论文：<a href="https://arxiv.org/pdf/2103.10360.pdf">ChatGLM1</a>、<a href="https://arxiv.org/abs/2406.12793">ChatGLM4</a></p>
+<h2 id="🚢ChatGLM1"><a href="#🚢ChatGLM1" class="headerlink" title="🚢ChatGLM1"></a>🚢ChatGLM1</h2><p>1代使用的是encoder-decoder架构，也就是seq2seq的思想。</p>
+<h3 id="预训练"><a href="#预训练" class="headerlink" title="预训练"></a>预训练</h3><p><strong>GLM的核心技术就在于预训练任务的设计。</strong></p>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/GLM%E5%A1%AB%E7%A9%BA%E4%BB%BB%E5%8A%A1.jpg" alt="GLM填空任务"></p>
+<ul>
+<li>如图，GLM预训练时，在输入文本中，随机删除连续的tokens，模型以自回归的方式从损坏的文本中预测缺失的词，这意味着在预测一个片段中的缺失词时，模型可以访问损坏的文本和之前预测的片段。</li>
+<li>为了充分捕捉不同片段之间的相互依赖关系，会随机打乱片段的顺序，类似于排列语言模型。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/GLM%E9%A2%84%E8%AE%AD%E7%BB%83%E6%96%B9%E6%A1%88.jpg" alt="GLM预训练方案"></p>
+<ul>
+<li>输入被分成两部分：Part A是缺失的文本，Part B是被遮盖的片段。Part A的词可以相互看到，但不能看到 Part B中的任何词。Part B的词可以看到Part A和Part B中的前置词，但不能看到Part B中的后续词。</li>
+<li>为了实现自回归生成，每个片段都用特殊的符号 <code>[START]</code> 和 <code>[END]</code> 进行填充。</li>
+<li>在GLM中，使用<strong>二维位置编码</strong>，第一个位置id用来标记Part A中的位置，第二个位置id用来表示跨度内部的相对位置。</li>
+<li>上图d部分也展示了A可以互相看到，B能看到完整的A、B的前面部分而看不到B的后面。</li>
+</ul>
+<h3 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h3><p>在原始Transformer模块的基础上进行了一些修改：</p>
+<ul>
+<li>重组了LN和残差连接的顺序；</li>
+<li>使用单个线性层对输出token进行预测；</li>
+<li>激活函数从ReLU换成了GeLUS。</li>
+</ul>
+<h2 id="🚢ChatGLM2"><a href="#🚢ChatGLM2" class="headerlink" title="🚢ChatGLM2"></a>🚢ChatGLM2</h2><p>主要提升：更长的上下文，更强大的性能，更高效的推理，更开放的协议。</p>
+<ul>
+<li>改进：</li>
+</ul>
+<ol>
+<li>RoPE替换二维位置编码；</li>
+<li>MQA替换MHA；</li>
+<li>完全的decoder-only：不区分Part A&#x2F;B，1代中Part A是双向注意力（可以看到后文），这代全部token都无法看到后文；</li>
+<li>多目标任务：去掉特殊任务的token。</li>
+</ol>
+<h2 id="🚢ChatGLM3"><a href="#🚢ChatGLM3" class="headerlink" title="🚢ChatGLM3"></a>🚢ChatGLM3</h2><p>架构与2代一致，整体变化不大，算是一个普通的迭代。</p>
+<ul>
+<li>2、3代相较于1代的共同变化：</li>
+</ul>
+<ol>
+<li>位置编码改为从每个GLMBlock一份提升为全局一份；</li>
+<li>词表的大小从ChatGLM的150528缩小为65024，加载更快；</li>
+<li>激活函数改成Swish-1。</li>
+</ol>
+<h2 id="🚢ChatGLM4"><a href="#🚢ChatGLM4" class="headerlink" title="🚢ChatGLM4"></a>🚢ChatGLM4</h2><p>GLM4整体性能相比GLM3全面提升60%，逼近GPT-4；支持更长上下文；更强的多模态；支持更快推理速度，更多并发，大大降低推理成本；同时GLM-4增强了智能体能力。</p>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/GLM4%E7%9A%84agent.jpg" alt="GLM4的agent能力"></p>
+<ul>
+<li>GLM-4 实现自主根据用户意图，自动理解、规划复杂指令，自由调用网页浏览器、Code Interpreter代码解释器和多模态文生图大模型，以完成复杂任务。</li>
+<li>简单来讲，即只需一个指令，GLM-4会自动分析指令，结合上下文选择决定调用合适的工具。</li>
+<li>可以实现文生图、代码解释器、网页浏览、函数调用等工具的使用，还可以一次调用多个工具。</li>
+</ul>
+<h1 id="🔥DeepSeek"><a href="#🔥DeepSeek" class="headerlink" title="🔥DeepSeek"></a>🔥DeepSeek</h1><p>论文：<a href="https://arxiv.org/pdf/2412.19437">DeepSeek-v3</a>、<a href="https://arxiv.org/pdf/2412.19437">DeepSeek-R1</a></p>
+<p>DeepSeek-v3改进了transformer内部结构和整体架构，在辅助损失函数等方面也有创新，使用监督微调和强化学习作为后训练手段提升模型性能。而且训练时间、耗费资源和GPT等模型相比都极具优势。</p>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/deepseek-v3%E8%A1%A8%E7%8E%B0.jpg" alt="deepseek-v3表现"></p>
+<ul>
+<li>deepseek-v3在编程和数学方面尤为强势，其他方面也相当优秀</li>
+</ul>
+<p>DeepSeek-R1是仅基于强化学习，完全不使用监督学习微调（SFT）的模型，性能强于OpenAI-o1，各方面表现都是最强的。它创新性地增加了<strong>思考环节</strong>，使用<strong>蒸馏手段</strong>训练了很强的小模型。</p>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/deepseek-R1%E8%A1%A8%E7%8E%B0.jpg" alt="deepseek-R1表现"></p>
+<h2 id="🚢DeepSeek-v3"><a href="#🚢DeepSeek-v3" class="headerlink" title="🚢DeepSeek-v3"></a>🚢DeepSeek-v3</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/deepseek-v3%E6%A0%B8%E5%BF%83%E6%94%B9%E8%BF%9B.jpg" alt="deepseek-v3核心改进"><br>deepseek-v3对transformer的MLP（前馈网络）和注意力机制进行了改进，得到 <strong>DeepSeekMoE</strong> 和 <strong>MLA</strong>。</p>
+<h3 id="MLA"><a href="#MLA" class="headerlink" title="MLA"></a>MLA</h3><p>Multi-head Latent Attention（MLA）是基于transformer的多头注意力机制（MHA）改进得到的。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/MLA%E6%94%B9%E8%BF%9B%E9%83%A8%E5%88%86.jpg" alt="MLA改进部分"></p>
+<ul>
+<li>如图所示，MLA在MHA前面增加了一些计算过程（可学习）生成QKV，而不是将输入直接作为QKV。主要是通过<strong>低秩联合压缩</strong>来减小KV cache的大小，从而提高推理速度。图中阴影部分是需要缓存的内容。</li>
+<li>如图kv生成的部分，上一层的输入通过<strong>降采样矩阵</strong>生成ct，再通过<strong>上采样矩阵</strong>生成K和V，这意味着KV cache只需要缓存内存占用更小的ct，而不用缓存K、V。</li>
+<li>可以看到输入进MHA的k由两个部分拼接而成，左边的是输入特征通过<strong>旋转位置向量（RoPE）</strong>进行位置编码生成的k（这个k连同ct需要缓存），主要提供位置信息；右边的是通过低秩联合压缩生成的k，主要提供内容信息。</li>
+<li>Q这边，是输入特征通过降采样矩阵生成ct，ct分别通过上采样和位置编码生成两种q，拼接后获得Q输入MHA。虽然Q不需要缓存，但是可能是为了QK操作的对称性，还是进行了这些操作。</li>
+<li>总的来说，MLA增加了计算量，但是降低了内存压力，相当于小的时间换了大的空间。</li>
+</ul>
+<h3 id="MoE"><a href="#MoE" class="headerlink" title="MoE"></a>MoE</h3><p>混合专家机制（MoE），不同于MLP每个神经元无时无刻都在起作用，MoE是一种稀疏的网络模型。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/DeepSeekMoE.jpg" alt="DeepSeekMoE"></p>
+<ul>
+<li>网络由多个共享专家（shared experts）和路由专家（routed experts）组成。如图，绿色的共享专家是必定激活的，而蓝色的路由专家是可选择激活的。路由器router负责选择top k个路由专家激活。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/MoE%E6%9C%BA%E5%88%B6.jpg" alt="MoE机制"></p>
+<ul>
+<li>公式如上，<strong>模块输出h &#x3D; 输入u（残差连接） + 共享专家输出 + 路由专家输出</strong>。g是路由专家的<strong>亲合度分数</strong>由输入u和路由器的向量e（可学习）求相似度求得，也就是路由器会学习如何根据输入选择最合适的Kr个路由专家进行推理。所以路由专家的输出其实是<strong>加权</strong>的，g会作为每个路由专家的话语权参与输出的计算。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%B9%B3%E8%A1%A1%E8%B7%AF%E7%94%B1%E6%96%B9%E6%A1%88.jpg" alt="无辅助损失负载均衡"></p>
+<ul>
+<li>为了防止某些路由专家过多或者过少地参与，过去会新设置辅助损失来惩罚这种不均的情况，这会降低模型性能、增加计算量。如上图，deepseek采用<strong>无辅助损失负载均衡</strong>（auxiliary-loss-free load balancing），即在训练过程中，为每个专家添加一个偏置b参与亲合度g的计算。当某个专家被激活时，b会降低来减少下一次激活的可能性，反之亦然。</li>
+</ul>
+<h3 id="MTP"><a href="#MTP" class="headerlink" title="MTP"></a>MTP</h3><p>Multi-Token Prediction（MTP）可以高效重复利用特征，使得模型一次生成多个token，以提升预测效果。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/MTP.jpg" alt="MTP"></p>
+<ul>
+<li>如图主模型（main model）是原本的transformer结构，主模型主干部分在输出特征用于预测时，该特征也被输入到MTP（只有一个transformer块）来生成多一个的token，有n个MTP就能生成n+1个token。</li>
+<li>损失计算时，所有MTP损失求均值，再加权后参与损失计算即可。</li>
+</ul>
+<h1 id="🔥Qwen"><a href="#🔥Qwen" class="headerlink" title="🔥Qwen"></a>🔥Qwen</h1><p>论文：<a href="https://arxiv.org/pdf/2309.16609">Qwen</a>、<a href="https://arxiv.org/pdf/2407.10671">Qwen2</a>、<a href="https://arxiv.org/pdf/2409.12186">Qwen2.5</a>、<a href="http://arxiv.org/pdf/2308.12966">Qwen-VL</a>、<a href="https://arxiv.org/pdf/2409.12191">Qwen2-VL</a></p>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Qwen%E7%B3%BB%E5%88%97.jpg" alt="Qwen系列"><br>千问系列除了有纯语言模型，还包含了视觉-语言模型Qwen-VL和音频-语言模型Qwen-Audio。团队发布了四个密集模型，参数量分别为0.5B、1.5B、7B和72B，还有一个参数量为57B的混合专家（MoE）模型。</p>
+<h2 id="🚢Qwen1"><a href="#🚢Qwen1" class="headerlink" title="🚢Qwen1"></a>🚢Qwen1</h2><p>Qwen是使用Transformer的修改版本设计的，具体来说，是采用了LlaMA的架构设计，Qwen对架构的修改包括以下几个方面：</p>
+<ul>
+<li><strong>位置编码</strong>：使用旋转位置编码RoPE；</li>
+<li><strong>偏置</strong>：在 QKV 注意力层中添加偏置以增强模型的外推能力；</li>
+<li><strong>归一化</strong>：使用RMSNorm，是LayerNorm的一种变体，在相同的性能下提高了效率。</li>
+<li><strong>激活函数</strong>：采用SwiGLU作为激活函数，它是Swish和门控线性单元的组合。初步实验验证，基于GLU的激活函数效果优于基于GELU等其他基线的选项。</li>
+</ul>
+<p>Qwen还合并了两种注意力机制：LogN-Scaling, Window Attention。LogN-Scaling调整点积Q和V的因子取决于上下文长度和训练长度的比率，确保注意力值的熵随着上下文长度的增长保持稳定。Window Attention将注意力限制在一个有限的上下文窗口中，避免模型注意力计算的tokens之间不会距离太远。</p>
+<ul>
+<li>训练方法上，后训练还是SFT和RLHF齐上。</li>
+</ul>
+<h2 id="🚢Qwen2"><a href="#🚢Qwen2" class="headerlink" title="🚢Qwen2"></a>🚢Qwen2</h2><h3 id="模型架构-1"><a href="#模型架构-1" class="headerlink" title="模型架构"></a>模型架构</h3><ul>
+<li>Qwen2采用了<strong>基于字节级别的字节对编码</strong>（byte-level byte-pair encoding）的相同tokenizer。这个tokenizer表现出高效的编码效率，其压缩率优于其他方案，从而增强了Qwen2的多语言处理能力。</li>
+<li>Qwen2系列基本上是基于Transformer架构的大型语言模型，具有因果掩码的自注意力机制。该系列包括四种规模的密集语言模型和一个MoE模型。</li>
+<li><strong>密集语言模型</strong>：<ul>
+<li>使用了前面提到的组查询注意力<strong>GQA</strong>代替MHA。</li>
+<li>同时，为了扩展Qwen2的上下文窗口，Qwen2实现了<strong>双块注意力</strong>（Dual Chunk Attention, <strong>DCA</strong>），将长序列分割成可管理长度的块。如果输入可以在一个块内处理，DCA会产生与原始注意力机制相同的结果。否则，DCA有助于有效捕捉块内和跨块之间的相对位置信息，从而提升长上下文处理性能。</li>
+<li>此外，Qwen2还采用了<strong>YARN</strong>重新调整注意力权重，以更好地进行长度外推。</li>
+<li>Qwen2延续了Qwen的<strong>SwiGLU</strong>激活函数，旋转位置向量（RoPE）进行位置编码，QKV偏置进行注意力处理，以及RMSNorm和预归一化方法以确保训练的稳定性。</li>
+</ul>
+</li>
+<li><strong>专家混合模型</strong>：<ul>
+<li>Qwen2的MoE模型采用细粒度专家，创建了更小规模的专家，并同时激活更多的专家。</li>
+<li>共享专家、路由专家之前提到，大体上是一样的。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/qwen2%E6%A8%A1%E5%9E%8B%E8%A7%84%E6%A0%BC.jpg" alt="qwen2模型规格"></p>
+<ul>
+<li>Qwen2系列包括五种规模的模型，与Qwen1.5模型相比，Qwen2模型每个token的键值（KV）大小显著较低。这一特性使得在长上下文推理任务中内存占用大幅减少。</li>
+</ul>
+<h3 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h3><ul>
+<li>预训练：<ul>
+<li>Qwen2对数据集进行了质量提升（优化算法过滤数据）和数据扩展（多语言、代码、数学）；</li>
+<li>还优化了来自不同来源和领域的数据混合以学习近似人类的分布。</li>
+<li>为了增强Qwen2的长上下文处理能力，团队在预训练的最后阶段将上下文长度从4,096个token增加到32,768个token。</li>
+</ul>
+</li>
+<li>后训练：<ul>
+<li>使用<strong>SFT</strong>和<strong>RLHF</strong>进行后训练，采用<strong>协作数据注释</strong>和<strong>自动数据生成</strong>来产生数据集。</li>
+<li>RLHF方面，在离线训练阶段，使用预编译的偏好数据集，通过直接偏好优化最大化y+和y-之间的似然差异（y+是比y-更优的答案）。在在线训练阶段，模型实时迭代优化其性能，利用奖励模型进行即时反馈。</li>
+</ul>
+</li>
+</ul>
+<h2 id="🚢Qwen2-5"><a href="#🚢Qwen2-5" class="headerlink" title="🚢Qwen2.5"></a>🚢Qwen2.5</h2><p>Qwen2.5 的关键特点：</p>
+<ol>
+<li><strong>规模更优</strong>，引入更多规模的模型如14B、32B；</li>
+<li><strong>数据更优</strong>，预训练和后训练数据量有了显著提升；</li>
+<li><strong>使用体验更优</strong>，Qwen2 在使用中的关键限制已被克服，包括生成长度从2K tokens提升至8K tokens，更好地支持结构化输入和输出（如表格和JSON），以及更便捷的工具使用。</li>
+</ol>
+<ul>
+<li>Qwen2.5延续了Qwen2的关键技术，如GQA、SwiGLU激活函数、旋转位置编码RoPE、RMSNorm，为了增强长上下文处理能力，继续使用YARN和双块注意力（DCA）。</li>
+<li>在稠密模型的基础上，团队进一步扩展为 MoE 模型架构。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Qwen2.5%E4%B8%8A%E4%B8%8B%E6%96%87%E8%83%BD%E5%8A%9B.jpg" alt="Qwen2.5上下文能力"></p>
+<ul>
+<li>Qwen2.5在秘钥检索任务中达到百分百准确率，显示其超强的上下文能力。为了提升推理速度，团队引入了<strong>稀疏注意力机制</strong>，这对于提升长上下文处理时的用户体验至关重要。</li>
+<li>总的来说，2.5是基于2的一个正常迭代，没有很革命性的新技术，但是得到了很好的效果。</li>
+</ul>
+<h2 id="🚢Qwen-VL"><a href="#🚢Qwen-VL" class="headerlink" title="🚢Qwen-VL"></a>🚢Qwen-VL</h2><h3 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h3><ul>
+<li>架构上，语言部分使用了来自Qwen-7B模型的预训练权重，视觉部分采用了Vision Transformer（ViT）架构，在训练和推理过程中，将输入图像调整到特定的分辨率，然后通过将图像分割成大小为14的图块来处理它们。</li>
+<li><strong>位置感知的视觉-语言适配器</strong>（Position-aware Vision-Language Adapter）：<ul>
+<li>作用：为了压缩图像token长度，提高图像特征处理效率；</li>
+<li>该模块由一个单层的交叉注意力模块构成，使用一组可训练的向量（嵌入）作为Q，使用来自视觉编码器的图像特征作为交叉注意力操作的K；</li>
+<li>考虑到图像中位置信息的重要性，作者引入了<strong>2D绝对位置编码</strong>到交叉注意力机制的查询-键对中。</li>
+</ul>
+</li>
+</ul>
+<h3 id="训练-1"><a href="#训练-1" class="headerlink" title="训练"></a>训练</h3><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Qwen-VL%E8%AE%AD%E7%BB%83%E8%BF%87%E7%A8%8B.jpg" alt="Qwen-VL训练过程"></p>
+<ol>
+<li>stage1：预训练，目标是使用大量的图文对数据对齐视觉模块和LLM的模态，这个阶段冻结LLM模块的参数； </li>
+<li>stage2：多任务预训练，使用更高质量的图文多任务数据（主要来源自开源VL任务，部分自建数据集），更高的图片像素输入，全参数训练；</li>
+<li>stage3：指令微调阶段，这个阶段冻结视觉Encoder模块，使用的数据主要来自大模型Self-Instruction方式自动生成，目标是提升模型的指令遵循和多轮对话能力。</li>
+</ol>
+<h2 id="🚢Qwen2-VL"><a href="#🚢Qwen2-VL" class="headerlink" title="🚢Qwen2-VL"></a>🚢Qwen2-VL</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Qwen2-VL%E6%9E%B6%E6%9E%84.jpg" alt="Qwen2-VL架构"></p>
+<ul>
+<li>架构方面，依然是LLM+视觉编码器结构，但是无adapter。</li>
+<li><strong>原生分辨率输入</strong>：Qwen2-VL现在可以处理<strong>任意分辨率</strong>的图像，动态将其转换为可变数量的视觉tokens。为支持此功能，修改了ViT，去除了原始的绝对位置嵌入，并引入了<strong>2D-RoPE</strong>，以捕捉图像的二维位置信息。</li>
+<li><strong>压缩图像token</strong>：为减少每幅图像的视觉tokens，在ViT后采用了一个简单的多层感知器（MLP）层，将相邻的2×2个tokens压缩为一个token，并在压缩的视觉tokens的开头和结尾放置特殊的&lt;|vision_start|&gt;和&lt;|vision_end|&gt; tokens。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%A4%9A%E6%A8%A1%E6%80%81%E6%97%8B%E8%BD%AC%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81.jpg" alt="多模态旋转位置编码"></p>
+<ul>
+<li><p>与传统的1D-RoPE（用于LLM）仅能编码一维位置信息不同，M-RoPE有效地建模了多模态输入的位置信息。这通过将原始旋转embedding分解为三个组成部分：时间、高度和宽度来实现。对于文本输入，这些组件使用相同的位置ID，使得M-RoPE在功能上等同于1D-RoPE。 在处理图像时，每个视觉token的时间ID保持不变，而高度和宽度组件则根据token在图像中的位置分配不同的ID。对于视频，视为一系列帧，每帧的时间ID递增，而高度和宽度组件遵循与图像相同的ID分配模式。在输入包含多种模态的情况下，每种模态的位置编号通过将前一模态的最大位置ID +1 来初始化（如图中文本输入的第一个位置编码为4）。M-RoPE不仅增强了位置信息的建模，还减少了图像和视频的位置ID值，使模型在推理时能够推断更长的序列。</p>
+</li>
+<li><p>训练依然遵循Qwen-VL，采用三阶段训练方法。</p>
+</li>
+</ul>
+<h1 id="🔥Baichuan2"><a href="#🔥Baichuan2" class="headerlink" title="🔥Baichuan2"></a>🔥Baichuan2</h1><p>在模型架构层面，主要还是基于Transformer，改进如下：</p>
+<ol>
+<li>Tokenizer：Baichuan 2的词汇表大小从 Baichuan 1的 64,000 扩展到 125,696，使用使用来自 SentencePiece 的字节对编码（BPE），不像 Baichuan 1那样添加虚拟前缀。</li>
+<li>Baichuan 2-7B 采用位置编码 RoPE，为 Baichuan 2-13B 采用 ALiBi。</li>
+<li>使用 SwiGLU 激活函数、RMSNorm均方根归一化、AdamW优化器、BF16精度。</li>
+<li>微调是SFT+RLHF。</li>
+</ol>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Baichuan%E7%9A%84RLHF.jpg" alt="Baichuan的RLHF"></p>
+<ul>
+<li>给定一个提示，用不同大小和阶段（SFT，PPO）的 Baichuan 2 模型生成多样化的回应。在训练RM时，只使用由 Baichuan 2 模型族生成的回应。</li>
+<li>获得奖励模型之后，使用<strong>PPO算法</strong>进一步训练语言模型，具体使用了<strong>4种模型</strong>：</li>
+</ul>
+<ol>
+<li>actor模型：负责生成回应；</li>
+<li>reference模型：用于计算固定参数的KL惩罚；</li>
+<li>reward模型：提供整个回应的总体奖励，固定参数；</li>
+<li>critic模型：用于学习每个token的值。</li>
+</ol>
+]]></content>
+      <categories>
+        <category>深度学习</category>
+      </categories>
+      <tags>
+        <tag>LLM</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>大模型SFT微调（LoRA）方案</title>
     <url>/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8BSFT%E5%BE%AE%E8%B0%83%EF%BC%88LoRA%EF%BC%89%E6%96%B9%E6%A1%88/</url>
     <content><![CDATA[<p>本次借助huggingface平台下载大模型和数据集，并在本地尝试进行微调，目的是跑通并体验微调过程。微调使用的是参数高效微调也就是PEFT，策略是有监督微调SFT，使用的具体方法是LoRA。<span id="more"></span><br><strong>注意：huggingface下载都是需要代理的，文中出现的python库自行用pip安装即可。</strong></p>
