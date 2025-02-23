@@ -93,7 +93,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">7.3k</span>
+            <span class="post-count">7.7k</span>
         </span>
     </span>
 
@@ -102,7 +102,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">26 分钟</span>
+            <span class="post-count">27 分钟</span>
         </span>
     </span>
 </div>
@@ -393,6 +393,18 @@
 <li><p>与传统的1D-RoPE（用于LLM）仅能编码一维位置信息不同，M-RoPE有效地建模了多模态输入的位置信息。这通过将原始旋转embedding分解为三个组成部分：时间、高度和宽度来实现。对于文本输入，这些组件使用相同的位置ID，使得M-RoPE在功能上等同于1D-RoPE。 在处理图像时，每个视觉token的时间ID保持不变，而高度和宽度组件则根据token在图像中的位置分配不同的ID。对于视频，视为一系列帧，每帧的时间ID递增，而高度和宽度组件遵循与图像相同的ID分配模式。在输入包含多种模态的情况下，每种模态的位置编号通过将前一模态的最大位置ID +1 来初始化（如图中文本输入的第一个位置编码为4）。M-RoPE不仅增强了位置信息的建模，还减少了图像和视频的位置ID值，使模型在推理时能够推断更长的序列。</p>
 </li>
 <li><p>训练依然遵循Qwen-VL，采用三阶段训练方法。</p>
+</li>
+</ul>
+<h1 id="🔥Kimi-k1-5"><a href="#🔥Kimi-k1-5" class="headerlink" title="🔥Kimi-k1.5"></a>🔥Kimi-k1.5</h1><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Kimi-k1.5.png" alt="Kimi-k1.5"><br>后训练部分通过SFT、long-CoT SFT、RL、long2short四个阶段让模型具备文本能力、多模态能力、128k超长文能力。</p>
+<ul>
+<li><strong>long-CoT SFT</strong>：让模型具备类o1模型的“先思考后回答”的能力，从 RL prompt 集合里采 prompt，通过提示工程构建了一个小而高质量的 long-CoT warmup 数据集，包含文本和图像输入的经过准确验证的推理路径。</li>
+<li><strong>RL</strong>：和deepseek类似，也是用了on-policy的强化学习策略，kimi在设计奖励函数时引入长度惩罚来缓解模型“过度思考”。</li>
+<li><strong>long2short</strong>：使用 long-CoT 模型来提升 short-CoT 模型能力，包括权重平均、拒绝采样和SFT、强化学习训练等一套流程：<ul>
+<li>模型合并：通过简单地平均两个模型的权重来合并它们，无需训练即可获得一个新模型。 </li>
+<li>最短拒绝采样：该方法对同一问题进行 n 次采样（实验中 n&#x3D;8），并选择最短的正确响应用于监督微调。</li>
+<li>DPO：利用 long-CoT 模型生成多个响应样本，选择最短的正确解决方案作为正样本，而较长的响应（正确但太长的、错误的）被视为负样本。这些正负样本对构成了用于DPO训练的成对偏好数据。</li>
+<li>Long2short RL：在标准RL训练阶段之后，选择一个在性能和token效率之间达到最佳平衡的模型作为基础模型，并进行单独的 Long2short RL训练阶段，引入提到过的长度惩罚。</li>
+</ul>
 </li>
 </ul>
 <h1 id="🔥Baichuan2"><a href="#🔥Baichuan2" class="headerlink" title="🔥Baichuan2"></a>🔥Baichuan2</h1><p>在模型架构层面，主要还是基于Transformer，改进如下：</p>
