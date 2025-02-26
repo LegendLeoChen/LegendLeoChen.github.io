@@ -93,7 +93,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">8.1k</span>
+            <span class="post-count">8.3k</span>
         </span>
     </span>
 
@@ -312,11 +312,17 @@
 </li>
 <li><p>GRPO：R1的强化学习核心算法，亮点是不需要使用critic模型进行评价，更稳定高效，公式是基于PPO算法进行改进的。</p>
 </li>
-<li><p>提示词：让模型生成的文字带有<code>&lt;think&gt;</code>和<code>&lt;answer&gt;</code>两部分，也就是xml格式。</p>
+<li><p>Zero的提示词：让模型生成的文字带有<code>&lt;think&gt;</code>和<code>&lt;answer&gt;</code>两部分，也就是xml格式。</p>
 </li>
-<li><p>奖励：主要就判断模型生成的文本有没有上述格式，以及生成的答案是否正确（比如代码可以通过力扣等去验证）。</p>
+<li><p>Zero的奖励：主要就判断模型生成的文本有没有上述格式，以及生成的答案是否正确（比如代码可以通过力扣等去验证）。</p>
 </li>
-<li><p>冷启动：为了防止基座模型V3在RL训练早期不稳定的情况，使用DeepSeek-R1-Zero生成长CoT数据来喂给基座模型进行初步微调。</p>
+<li><p>R1多阶段训练：</p>
+<ol>
+<li>阶段1（冷启动）：防止初期RL训练不稳定，使用少量高质量的 CoT 数据进行冷启动，预热模型，数据来自Zero模型生成以及人为筛选。</li>
+<li>阶段2：进行面向推理的强化学习，提升模型在推理任务上的性能。</li>
+<li>阶段3：使用拒绝采样和监督微调，进一步提升模型的综合能力。</li>
+<li>阶段4：再次进行强化学习，使模型在所有场景下都表现良好</li>
+</ol>
 </li>
 </ul>
 <p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Deepseek-R1%E6%B6%8C%E7%8E%B0%E5%8F%8D%E6%80%9D%E8%83%BD%E5%8A%9B.png" alt="Deepseek-R1涌现反思能力"></p>
@@ -325,7 +331,8 @@
 </ul>
 <p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/R1%E8%92%B8%E9%A6%8Fqwen%E5%92%8Cllama.png" alt="R1蒸馏qwen和llama"></p>
 <ul>
-<li>蒸馏：团队还将R1作为教师模型蒸馏给llama和qwen，效果也不错，超越原模型，以及更大规模的原模型。同时还发现蒸馏会比直接给小模型做RL更好。</li>
+<li>蒸馏：为了获得更高效的小模型，并使其具有 DeekSeek-R1 的推理能力，团队还将R1作为教师模型蒸馏给llama和qwen，效果也不错，超越原模型，以及更大规模的原模型。</li>
+<li>同时还发现蒸馏会比直接给小模型做RL更好。因为蒸馏可将「大模型的推理轨迹」直接转移给小模型，小模型只需要模仿大模型相对完备的推理流程，可以在较小训练&#x2F;推理开销下取得远胜于自身独立强化学习的效果，这也是团队认为R1工作的核心价值。</li>
 </ul>
 <h1 id="🔥Qwen"><a href="#🔥Qwen" class="headerlink" title="🔥Qwen"></a>🔥Qwen</h1><p>论文：<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2309.16609">Qwen</a>、<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2407.10671">Qwen2</a>、<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2409.12186">Qwen2.5</a>、<a target="_blank" rel="noopener" href="http://arxiv.org/pdf/2308.12966">Qwen-VL</a>、<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2409.12191">Qwen2-VL</a></p>
 <p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Qwen%E7%B3%BB%E5%88%97.jpg" alt="Qwen系列"><br>千问系列除了有纯语言模型，还包含了视觉-语言模型Qwen-VL和音频-语言模型Qwen-Audio。团队发布了四个密集模型，参数量分别为0.5B、1.5B、7B和72B，还有一个参数量为57B的混合专家（MoE）模型。</p>
