@@ -93,7 +93,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">7.7k</span>
+            <span class="post-count">8.1k</span>
         </span>
     </span>
 
@@ -102,7 +102,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">27 分钟</span>
+            <span class="post-count">29 分钟</span>
         </span>
     </span>
 </div>
@@ -305,6 +305,27 @@
 <ul>
 <li>如图主模型（main model）是原本的transformer结构，主模型主干部分在输出特征用于预测时，该特征也被输入到MTP（只有一个transformer块）来生成多一个的token，有n个MTP就能生成n+1个token。</li>
 <li>损失计算时，所有MTP损失求均值，再加权后参与损失计算即可。</li>
+</ul>
+<h2 id="🚢DeepSeek-R1"><a href="#🚢DeepSeek-R1" class="headerlink" title="🚢DeepSeek-R1"></a>🚢DeepSeek-R1</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/deepseek-R1%E8%AE%AD%E7%BB%83%E6%B5%81%E7%A8%8B.png" alt="deepseek-R1训练流程"><br>R1的训练主要基于传统强化学习方法，这让模型能够通过思维链CoT的方式进行长思考以生成文本。训练流程大致如上。</p>
+<ul>
+<li><p>用纯RL方法将V3作为基座先训练出了DeepSeek-R1-Zero，没有用到SFT，该模型具有自我思考、验证、反思的能力。这也是为数不多只用RL进行训练的模型。</p>
+</li>
+<li><p>GRPO：R1的强化学习核心算法，亮点是不需要使用critic模型进行评价，更稳定高效，公式是基于PPO算法进行改进的。</p>
+</li>
+<li><p>提示词：让模型生成的文字带有<code>&lt;think&gt;</code>和<code>&lt;answer&gt;</code>两部分，也就是xml格式。</p>
+</li>
+<li><p>奖励：主要就判断模型生成的文本有没有上述格式，以及生成的答案是否正确（比如代码可以通过力扣等去验证）。</p>
+</li>
+<li><p>冷启动：为了防止基座模型V3在RL训练早期不稳定的情况，使用DeepSeek-R1-Zero生成长CoT数据来喂给基座模型进行初步微调。</p>
+</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Deepseek-R1%E6%B6%8C%E7%8E%B0%E5%8F%8D%E6%80%9D%E8%83%BD%E5%8A%9B.png" alt="Deepseek-R1涌现反思能力"></p>
+<ul>
+<li>如上图，红色文字反映了R1在训练过程中涌现的反思能力，这并未经过引导。</li>
+</ul>
+<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/R1%E8%92%B8%E9%A6%8Fqwen%E5%92%8Cllama.png" alt="R1蒸馏qwen和llama"></p>
+<ul>
+<li>蒸馏：团队还将R1作为教师模型蒸馏给llama和qwen，效果也不错，超越原模型，以及更大规模的原模型。同时还发现蒸馏会比直接给小模型做RL更好。</li>
 </ul>
 <h1 id="🔥Qwen"><a href="#🔥Qwen" class="headerlink" title="🔥Qwen"></a>🔥Qwen</h1><p>论文：<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2309.16609">Qwen</a>、<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2407.10671">Qwen2</a>、<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2409.12186">Qwen2.5</a>、<a target="_blank" rel="noopener" href="http://arxiv.org/pdf/2308.12966">Qwen-VL</a>、<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2409.12191">Qwen2-VL</a></p>
 <p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/Qwen%E7%B3%BB%E5%88%97.jpg" alt="Qwen系列"><br>千问系列除了有纯语言模型，还包含了视觉-语言模型Qwen-VL和音频-语言模型Qwen-Audio。团队发布了四个密集模型，参数量分别为0.5B、1.5B、7B和72B，还有一个参数量为57B的混合专家（MoE）模型。</p>
