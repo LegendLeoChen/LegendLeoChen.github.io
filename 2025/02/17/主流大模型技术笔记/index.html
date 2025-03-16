@@ -97,7 +97,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">8.7k</span>
+            <span class="post-count">8.8k</span>
         </span>
     </span>
 
@@ -178,9 +178,12 @@
 </li>
 <li>GELU：GELU(x) &#x3D; x · P(X⩽x) &#x3D; x · Φ(x)，其中Φ(x)表示正态分布的累积分布函数。</li>
 </ol>
-<h2 id="🚢归一化"><a href="#🚢归一化" class="headerlink" title="🚢归一化"></a>🚢归一化</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/BN%E5%92%8CLN.png" alt="BN和LN"></p>
+<h2 id="🚢归一化"><a href="#🚢归一化" class="headerlink" title="🚢归一化"></a>🚢归一化</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%BD%92%E4%B8%80%E5%8C%96%E5%85%AC%E5%BC%8F.png" alt="归一化公式"></p>
 <ul>
-<li>归一化统一公式：<br>$$<br>y &#x3D; \gamma \cdot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta<br>$$</li>
+<li>归一化统一公式，包括了归一化和仿射变换（γx+β）。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/BN%E5%92%8CLN.png" alt="BN和LN"></li>
+<li>Batch Normalization和Layer Normalization的区别：BN就是对整个batch的数据的特征进行逐一归一化，也就是每个特征各自归一化。LN则是单个样本的所有特征进行归一化。</li>
+<li>RMSNorm：对x求均方根，然后直接仿射变换，不计算方差和均值，降低计算量。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/DyT%E5%85%AC%E5%BC%8F.png" alt="DyT公式"></li>
+<li>Dynamic Tanh：将x映射到tanh，获得非线性能力，α也是可学习的动态缩放因子。可以大大提升计算效率，性能指标大差不差甚至可能提升。是传统归一化的很好替代方案。</li>
 </ul>
 <h1 id="🔥Llama3"><a href="#🔥Llama3" class="headerlink" title="🔥Llama3"></a>🔥Llama3</h1><p>论文：<a target="_blank" rel="noopener" href="https://ai.meta.com/research/publications/the-llama-3-herd-of-models/">The Llama 3 Herd of Models</a><br>llama3相较于以往，数据量提升了，模型规模也提升了，算法架构并没有很复杂，使用的是标准的稠密的transformer模型，模型性能的提升主要得益于数据集的质量和多样性。</p>
 <p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/llama3%E8%A1%A8%E7%8E%B0.jpg" alt="llama3表现"></p>
