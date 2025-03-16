@@ -49,7 +49,11 @@
 <script>hljs.initHighlightingOnLoad();</script>
 <!-- jquery，懒加载、统计、说说需要的jquery -->
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
 <link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"><link rel="stylesheet" type="text/css" href="/assets/css/DPlayer.min.css"><script src="/assets/js/DPlayer.min.js"></script></head>
   </html>
 </html>
@@ -377,7 +381,7 @@
     utils<span class="token punctuation">.</span>draw_image<span class="token punctuation">(</span>return_list<span class="token punctuation">)</span>                   <span class="token comment" spellcheck="true"># 绘制回报曲线</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h1 id="🔥效果"><a href="#🔥效果" class="headerlink" title="🔥效果"></a>🔥效果</h1><ul>
-<li>训练过程（最终完成收敛的情况）演示：<div id="dplayer0" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer0"),"theme":"#FADFA3","loop":true,"video":{"url":"/2025/01/01/基于DQN的机器人自动走迷宫（2）/训练完成.mp4","pic":"训练完成.jpg"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script></li>
+<li>训练过程（最终完成收敛的情况）演示：<div id="dplayer2" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer2"),"theme":"#FADFA3","loop":true,"video":{"url":"/2025/01/01/基于DQN的机器人自动走迷宫（2）/训练完成.mp4","pic":"训练完成.jpg"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script></li>
 <li>训练结果，这次训练明显有很不错的收敛。<br><img src="/2025/01/01/%E5%9F%BA%E4%BA%8EDQN%E7%9A%84%E6%9C%BA%E5%99%A8%E4%BA%BA%E8%87%AA%E5%8A%A8%E8%B5%B0%E8%BF%B7%E5%AE%AB%EF%BC%882%EF%BC%89/%E8%AE%AD%E7%BB%83%E5%AE%8C%E6%88%90.jpg" alt="训练结果"></li>
 </ul>
 <h1 id="🔥总结和思考"><a href="#🔥总结和思考" class="headerlink" title="🔥总结和思考"></a>🔥总结和思考</h1><ul>

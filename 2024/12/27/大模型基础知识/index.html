@@ -49,7 +49,11 @@
 <script>hljs.initHighlightingOnLoad();</script>
 <!-- jquery，懒加载、统计、说说需要的jquery -->
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
 <link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
   </html>
 </html>
@@ -93,7 +97,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">8.1k</span>
+            <span class="post-count">8.2k</span>
         </span>
     </span>
 
@@ -102,7 +106,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">27 分钟</span>
+            <span class="post-count">28 分钟</span>
         </span>
     </span>
 </div>
@@ -437,7 +441,7 @@
 </ul>
 <h3 id="Prefix"><a href="#Prefix" class="headerlink" title="Prefix"></a>Prefix</h3><p>在QKV计算里面加参数，即为模型的输入<strong>添加k个额外的标记</strong>，训练这些额外的前缀参数就可以。<br><img src="/2024/12/27/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/Prefix_Tuning.jpg" alt="Prefix Tuning"></p>
 <ul>
-<li><strong>Prefix Tuning</strong>：如上图，对输入token之前构造和任务相关的虚拟tokens作为prefix，训练时只更新前缀部分，其他参数固定。<ul>
+<li><strong>Prefix Tuning</strong>：如上图，对输入token之前构造和任务相关的虚拟tokens作为prefix。也就是新构建了prefix其实是可学习的网络参数，它和输入序列进行拼接（而非原网络神经元），训练时更新prefix部分，其他网络参数固定。并且该方法对每一层的输入都会有prefix。<ul>
 <li>该方法与Fine-Tuning效果比肩。</li>
 </ul>
 </li>

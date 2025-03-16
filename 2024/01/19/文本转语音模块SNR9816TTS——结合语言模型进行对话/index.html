@@ -49,7 +49,11 @@
 <script>hljs.initHighlightingOnLoad();</script>
 <!-- jquery，懒加载、统计、说说需要的jquery -->
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
 <link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"><link rel="stylesheet" type="text/css" href="/assets/css/DPlayer.min.css"><script src="/assets/js/DPlayer.min.js"></script></head>
   </html>
 </html>
@@ -478,7 +482,7 @@ String <span class="token function">getGPTAnswer</span><span class="token punctu
 </ul>
 <h2 id="正式调试"><a href="#正式调试" class="headerlink" title="正式调试"></a>正式调试</h2><ul>
 <li>按接线图接线后，烧录ESP32代码，上电，即可在Arduino的串口界面进行验证。</li>
-<li>先通电时发出“语音模块就绪”（视频没展示），说明TTS模块可以工作，然后在输入框输入问题，得到了对应的语音结果，说明调试成功。<br><img src="/2024/01/19/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9D%97SNR9816TTS%E2%80%94%E2%80%94%E7%BB%93%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%BF%9B%E8%A1%8C%E5%AF%B9%E8%AF%9D/%E6%AD%A3%E5%BC%8F%E8%B0%83%E8%AF%95%E7%BB%93%E6%9E%9C.jpg" alt="正式调试结果"><div id="dplayer0" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer0"),"theme":"#FADFA3","loop":true,"video":{"url":"/2024/01/19/文本转语音模块SNR9816TTS——结合语言模型进行对话/调试结果.mov","pic":"正式调试结果.jpg"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script></li>
+<li>先通电时发出“语音模块就绪”（视频没展示），说明TTS模块可以工作，然后在输入框输入问题，得到了对应的语音结果，说明调试成功。<br><img src="/2024/01/19/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3%E6%A8%A1%E5%9D%97SNR9816TTS%E2%80%94%E2%80%94%E7%BB%93%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%BF%9B%E8%A1%8C%E5%AF%B9%E8%AF%9D/%E6%AD%A3%E5%BC%8F%E8%B0%83%E8%AF%95%E7%BB%93%E6%9E%9C.jpg" alt="正式调试结果"><div id="dplayer3" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer3"),"theme":"#FADFA3","loop":true,"video":{"url":"/2024/01/19/文本转语音模块SNR9816TTS——结合语言模型进行对话/调试结果.mov","pic":"正式调试结果.jpg"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script></li>
 <li>注意，复杂问题通常要等待一段时间才能回复。</li>
 </ul>
  

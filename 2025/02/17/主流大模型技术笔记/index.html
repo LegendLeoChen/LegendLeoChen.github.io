@@ -49,7 +49,11 @@
 <script>hljs.initHighlightingOnLoad();</script>
 <!-- jquery，懒加载、统计、说说需要的jquery -->
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css">
 <link rel="stylesheet" href="/css/prism-line-numbers.css" type="text/css"></head>
   </html>
 </html>
@@ -93,7 +97,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">8.6k</span>
+            <span class="post-count">8.7k</span>
         </span>
     </span>
 
@@ -102,7 +106,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">30 分钟</span>
+            <span class="post-count">31 分钟</span>
         </span>
     </span>
 </div>
@@ -174,6 +178,10 @@
 </li>
 <li>GELU：GELU(x) &#x3D; x · P(X⩽x) &#x3D; x · Φ(x)，其中Φ(x)表示正态分布的累积分布函数。</li>
 </ol>
+<h2 id="🚢归一化"><a href="#🚢归一化" class="headerlink" title="🚢归一化"></a>🚢归一化</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/BN%E5%92%8CLN.png" alt="BN和LN"></p>
+<ul>
+<li>归一化统一公式：<br>$$<br>y &#x3D; \gamma \cdot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta<br>$$</li>
+</ul>
 <h1 id="🔥Llama3"><a href="#🔥Llama3" class="headerlink" title="🔥Llama3"></a>🔥Llama3</h1><p>论文：<a target="_blank" rel="noopener" href="https://ai.meta.com/research/publications/the-llama-3-herd-of-models/">The Llama 3 Herd of Models</a><br>llama3相较于以往，数据量提升了，模型规模也提升了，算法架构并没有很复杂，使用的是标准的稠密的transformer模型，模型性能的提升主要得益于数据集的质量和多样性。</p>
 <p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/llama3%E8%A1%A8%E7%8E%B0.jpg" alt="llama3表现"></p>
 <ul>
