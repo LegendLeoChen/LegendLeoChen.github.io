@@ -2775,69 +2775,9 @@ Thought:
     <title>主流大模型技术笔记</title>
     <url>/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/</url>
     <content><![CDATA[<p>本文作为笔记，通过阅读论文，记录市面上主流的大模型的技术内容。</p>
-<h1 id="🔥基础预备"><a href="#🔥基础预备" class="headerlink" title="🔥基础预备"></a>🔥基础预备</h1><h2 id="🚢注意力机制"><a href="#🚢注意力机制" class="headerlink" title="🚢注意力机制"></a>🚢注意力机制</h2><span id="more"></span>
-<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6.jpg" alt="注意力机制计算"></p>
-<ul>
-<li>QKV都是输入的矩阵，可以理解为推理时，拿着Q去查找每个词的K，根据QK相似度的不同从而得到一个权重矩阵，再取K对应的V进行矩阵乘法计算。</li>
-<li>多头注意力（MHA）本质上就像CNN里面的多通道，学习不同方面的特征，有多组的QKV经过各自结构一致的网络共同整合得到整个模块的输出。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%90%84%E7%A7%8D%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B.jpg" alt="各种多头注意力"></li>
-<li>多查询注意力机制（MQA）是MHA的变体，所有注意力头直接共享同一组KV，相当于减少了参数。</li>
-<li>组查询注意力（GQA）将MHA和MQA进行折中，也就是若干个头一组共享KV。</li>
-</ul>
-<h2 id="🚢KV-Cache"><a href="#🚢KV-Cache" class="headerlink" title="🚢KV Cache"></a>🚢KV Cache</h2><p>KV Cache是一种优化技术，用于提升模型推理效率，<strong>通过缓存K、V减少重复计算</strong>，从而加速解码器的矩阵运算。DeepSeek里面的MLA等MHA变体都是基于该技术进行改进的。</p>
-<ul>
-<li>KV Cache仅用于推理阶段，该阶段KV保持不变，因此可以缓存；</li>
-<li>KV Cache只存在于解码器，因为解码器生成时需要多次运算矩阵；</li>
-<li>KV Cache因为缓存了KV，会加速Q@K@V的矩阵乘法运算，提高推理速度；</li>
-<li>KV Cache的缺点是会增加内存占用。</li>
-</ul>
-<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E4%B8%8D%E4%BD%BF%E7%94%A8KV_Cache.jpg" alt="不使用KV Cache的注意力"></p>
-<ul>
-<li>如上图，每次自回归时，之前的QKV三者本身的生成、Q与所有K相乘的结果、QKV计算的结果都是要重复计算的，因此会增加推理时间。</li>
-</ul>
-<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/KV_Cache.jpg" alt="KV Cache"></p>
-<ul>
-<li><p>如上图每次自回归时，QK相乘得到结果与V矩阵相乘，紫色部分是过去的K、V，它们本来会被新的K、V所覆盖，但是每一步计算都要用到，需要重新生成，把它们缓存下来就能得到很明显的性能提升。</p>
-</li>
-<li><p><strong>为什么没有Q Cache</strong>，如上图，因为Q每次都是新生成的那个token的Q与所有的K进行相乘，根本用不到之前的Q，也就不用缓存了。</p>
-</li>
-<li><p>QK相乘结果也不缓存，因为过去的QK和Q一样也是不需要用于生成新的token的。</p>
-</li>
-</ul>
-<blockquote>
-<p>由于内存限制，LLM的回复能力确实会随着问答的进行逐渐变差，这种现象可以理解为模型具备一定的“遗忘性”。具体而言，由于硬件资源的限制，KV Cache的大小是有限的。当缓存达到其容量上限时，旧的信息可能会被新的信息覆盖或丢弃。其表现为随着问答的进行，早期的对话内容可能会因为KV Cache的容量限制而被移除或覆盖，导致模型逐渐“遗忘”之前的上下文。由于模型无法访问完整的对话历史，其生成的回复可能会变得不够准确或连贯，尤其是在需要依赖早期信息的情况下。所以，在长对话或多轮问答中，模型的性能可能会显着下降，因为它无法有效地利用整个对话历史。</p>
-</blockquote>
-<h2 id="🚢精度"><a href="#🚢精度" class="headerlink" title="🚢精度"></a>🚢精度</h2><h3 id="FP32-x2F-FP16-x2F-BF16"><a href="#FP32-x2F-FP16-x2F-BF16" class="headerlink" title="FP32&#x2F;FP16&#x2F;BF16"></a>FP32&#x2F;FP16&#x2F;BF16</h3><p>fp32、fp16、bf16分别指单精度浮点数（float32）、Intel提出的半精度浮点数（float16）、nvidia提出的半精度浮点数（bfloat16）。名字当中的数字就对应了该种浮点数表示方法所占的bit数，那么fp16和bp16的存储空间天然就是fp32的一半。</p>
-<p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E7%B2%BE%E5%BA%A6%E7%A4%BA%E6%84%8F%E5%9B%BE.jpg" alt="精度示意图"></p>
-<ul>
-<li>以fp16为例，它占有16bit（2字节），其中5bit用来表示指数位（表示2的幂次），10bit用来表示小数位（也叫尾数位，表示浮点数的有效数字部分），还有一个符号位。5个指数位本来可以表示00000-11111，但是全0和全1有特殊含义，换算成10进制也就是1至30，减去偏置15、能表示的正负区间为-14至15，尾数位可以表示1.0000000000至1.1111111111（此时尾数位前的隐藏项为1），换算成10进制也就是[1, 2)。</li>
-<li>指数位全0表示<strong>非规格数</strong>，也就是+0、-0, 以及非常靠近0的数, 比如1E-38。</li>
-<li>指数全1表示<strong>特殊数</strong>，有Inf和NaN两种情况。小数位全0表示无穷大inf，根据符号位不同可以分为+inf和-inf。小数位不全为0，表示NaN。</li>
-<li>规格数和非规格数拼接起来才是一个完整的取值范围。</li>
-<li>所以fp16最大是 二进制 ±1.1111111111×2^11110 &#x3D;&gt; 十进制±(1+1023&#x2F;1024)×2^15 &#x3D; ±65504；最小是1&#x2F;2024×2^(-14) &#x3D; 5.96E−8。也就是fp16的动态范围为（5.96E−8 ~ 65504）</li>
-<li>fp32（8指数+23尾数+1符号）的动态范围为(1.4E-45 ~ 3.40E38)，bf16相当于尾数位为7的fp32，动态范围是（9.2E−41~3.38E38），也就是<strong>牺牲精度换来高取值范围</strong>。</li>
-</ul>
-<h3 id="混合精度"><a href="#混合精度" class="headerlink" title="混合精度"></a>混合精度</h3><p>混合精度就是通过一些设计，使得我们可以享受半精度的优点，又可以一定程度规避数据溢出和舍入误差（超小值被忽略导致误差）。</p>
-<ul>
-<li>我们使用 fp32 权重作为精确的 “主权重 (master weight)”进行备份，而其他所有值（weights，activations， gradients）均使用 fp16 进行计算以提高训练速度，最后在梯度更新阶段再使用半精度的梯度更新单精度的主权重，这样当很小的梯度乘上学习率后要跟权重（fp32的）做运算时，就不会被舍弃了。</li>
-<li>由于 fp16 混合精度大大减少了内存需求, 并可以实现更快的速度, 因此只有在在此训练模式下表现不佳时, 才考虑不使用混合精度训练。</li>
-</ul>
-<h2 id="🚢新的激活函数"><a href="#🚢新的激活函数" class="headerlink" title="🚢新的激活函数"></a>🚢新的激活函数</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E6%96%B0%E7%9A%84%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0.jpg" alt="新的激活函数"><br>下列公式中 σ 即 sigmoid 函数，σ(x) &#x3D; 1 &#x2F; (1 + exp(-x)) 。</p>
-<ol>
-<li>GLU：GLU(x) &#x3D; (xW + b) ⊗ σ(xV + c)；</li>
-<li>Swish：Swish(x) &#x3D; x · σ(x)；</li>
-<li>SwiGLU：SwiGLU(x, W, V, b, c) &#x3D; Swish_1(xW + b) ⊗ (xV + c) ，其中Swish_β(x) &#x3D; x σ(β x)，⊗是哈达玛积（对位元素乘）；<blockquote>
-<p>SwiGLU函数可以提升性能，有可微性、自适应性（因为GLU是一种类似于长短期记忆网络（LSTM）带有门机制的网络结构，通过门机制控制信息通过的比例，来让模型自适应地选择哪些单词和特征对预测下一个词有帮助）。</p>
-</blockquote>
-</li>
-<li>GELU：GELU(x) &#x3D; x · P(X⩽x) &#x3D; x · Φ(x)，其中Φ(x)表示正态分布的累积分布函数。</li>
-</ol>
-<h2 id="🚢归一化"><a href="#🚢归一化" class="headerlink" title="🚢归一化"></a>🚢归一化</h2><p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%BD%92%E4%B8%80%E5%8C%96%E5%85%AC%E5%BC%8F.png" alt="归一化公式"></p>
-<ul>
-<li>归一化统一公式，包括了归一化和仿射变换（γx+β）。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/BN%E5%92%8CLN.png" alt="BN和LN"></li>
-<li>Batch Normalization和Layer Normalization的区别：BN就是对整个batch的数据的特征进行逐一归一化，也就是每个特征各自归一化。LN则是单个样本的所有特征进行归一化。</li>
-<li>RMSNorm：对x求均方根，然后直接仿射变换，不计算方差和均值，降低计算量。<br><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/DyT%E5%85%AC%E5%BC%8F.png" alt="DyT公式"></li>
-<li>Dynamic Tanh：将x映射到tanh，获得非线性能力，α也是可学习的动态缩放因子。可以大大提升计算效率，性能指标大差不差甚至可能提升。是传统归一化的很好替代方案。</li>
-</ul>
+<a href="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/" title="大模型预备知识">大模型预备知识</a>
+<span id="more"></span>
+
 <h1 id="🔥Llama3"><a href="#🔥Llama3" class="headerlink" title="🔥Llama3"></a>🔥Llama3</h1><p>论文：<a href="https://ai.meta.com/research/publications/the-llama-3-herd-of-models/">The Llama 3 Herd of Models</a><br>llama3相较于以往，数据量提升了，模型规模也提升了，算法架构并没有很复杂，使用的是标准的稠密的transformer模型，模型性能的提升主要得益于数据集的质量和多样性。</p>
 <p><img src="/2025/02/17/%E4%B8%BB%E6%B5%81%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/llama3%E8%A1%A8%E7%8E%B0.jpg" alt="llama3表现"></p>
 <ul>
@@ -3135,6 +3075,118 @@ Thought:
       <tags>
         <tag>LLM</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>大模型预备知识</title>
+    <url>/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/</url>
+    <content><![CDATA[<p>本文记录了解大模型技术前可以先学习的细小知识点。</p>
+<h1 id="🔥注意力机制"><a href="#🔥注意力机制" class="headerlink" title="🔥注意力机制"></a>🔥注意力机制</h1><span id="more"></span>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6.jpg" alt="注意力机制计算"></p>
+<ul>
+<li>QKV都是输入的矩阵，可以理解为推理时，拿着Q去查找每个词的K，根据QK相似度的不同从而得到一个权重矩阵，再取K对应的V进行矩阵乘法计算。</li>
+<li>多头注意力（MHA）本质上就像CNN里面的多通道，学习不同方面的特征，有多组的QKV经过各自结构一致的网络共同整合得到整个模块的输出。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E5%90%84%E7%A7%8D%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B.jpg" alt="各种多头注意力"></li>
+<li>多查询注意力机制（MQA）是MHA的变体，所有注意力头直接共享同一组KV，相当于减少了参数。</li>
+<li>组查询注意力（GQA）将MHA和MQA进行折中，也就是若干个头一组共享KV。</li>
+</ul>
+<h1 id="🔥KV-Cache"><a href="#🔥KV-Cache" class="headerlink" title="🔥KV Cache"></a>🔥KV Cache</h1><p>KV Cache是一种优化技术，用于提升模型推理效率，<strong>通过缓存K、V减少重复计算</strong>，从而加速解码器的矩阵运算。DeepSeek里面的MLA等MHA变体都是基于该技术进行改进的。</p>
+<ul>
+<li>KV Cache仅用于推理阶段，该阶段KV保持不变，因此可以缓存；</li>
+<li>KV Cache只存在于解码器，因为解码器生成时需要多次运算矩阵；</li>
+<li>KV Cache因为缓存了KV，会加速Q@K@V的矩阵乘法运算，提高推理速度；</li>
+<li>KV Cache的缺点是会增加内存占用。</li>
+</ul>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E4%B8%8D%E4%BD%BF%E7%94%A8KV_Cache.jpg" alt="不使用KV Cache的注意力"></p>
+<ul>
+<li>如上图，每次自回归时，之前的QKV三者本身的生成、Q与所有K相乘的结果、QKV计算的结果都是要重复计算的，因此会增加推理时间。</li>
+</ul>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/KV_Cache.jpg" alt="KV Cache"></p>
+<ul>
+<li><p>如上图每次自回归时，QK相乘得到结果与V矩阵相乘，紫色部分是过去的K、V，它们本来会被新的K、V所覆盖，但是每一步计算都要用到，需要重新生成，把它们缓存下来就能得到很明显的性能提升。</p>
+</li>
+<li><p><strong>为什么没有Q Cache</strong>，如上图，因为Q每次都是新生成的那个token的Q与所有的K进行相乘，根本用不到之前的Q，也就不用缓存了。</p>
+</li>
+<li><p>QK相乘结果也不缓存，因为过去的QK和Q一样也是不需要用于生成新的token的。</p>
+</li>
+</ul>
+<blockquote>
+<p>由于内存限制，LLM的回复能力确实会随着问答的进行逐渐变差，这种现象可以理解为模型具备一定的“遗忘性”。具体而言，由于硬件资源的限制，KV Cache的大小是有限的。当缓存达到其容量上限时，旧的信息可能会被新的信息覆盖或丢弃。其表现为随着问答的进行，早期的对话内容可能会因为KV Cache的容量限制而被移除或覆盖，导致模型逐渐“遗忘”之前的上下文。由于模型无法访问完整的对话历史，其生成的回复可能会变得不够准确或连贯，尤其是在需要依赖早期信息的情况下。所以，在长对话或多轮问答中，模型的性能可能会显着下降，因为它无法有效地利用整个对话历史。</p>
+</blockquote>
+<h1 id="🔥精度"><a href="#🔥精度" class="headerlink" title="🔥精度"></a>🔥精度</h1><h2 id="FP32-x2F-FP16-x2F-BF16"><a href="#FP32-x2F-FP16-x2F-BF16" class="headerlink" title="FP32&#x2F;FP16&#x2F;BF16"></a>FP32&#x2F;FP16&#x2F;BF16</h2><p>fp32、fp16、bf16分别指单精度浮点数（float32）、Intel提出的半精度浮点数（float16）、nvidia提出的半精度浮点数（bfloat16）。名字当中的数字就对应了该种浮点数表示方法所占的bit数，那么fp16和bp16的存储空间天然就是fp32的一半。</p>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E7%B2%BE%E5%BA%A6%E7%A4%BA%E6%84%8F%E5%9B%BE.jpg" alt="精度示意图"></p>
+<ul>
+<li>以fp16为例，它占有16bit（2字节），其中5bit用来表示指数位（表示2的幂次），10bit用来表示小数位（也叫尾数位，表示浮点数的有效数字部分），还有一个符号位。5个指数位本来可以表示00000-11111，但是全0和全1有特殊含义，换算成10进制也就是1至30，减去偏置15、能表示的正负区间为-14至15，尾数位可以表示1.0000000000至1.1111111111（此时尾数位前的隐藏项为1），换算成10进制也就是[1, 2)。</li>
+<li>指数位全0表示<strong>非规格数</strong>，也就是+0、-0, 以及非常靠近0的数, 比如1E-38。</li>
+<li>指数全1表示<strong>特殊数</strong>，有Inf和NaN两种情况。小数位全0表示无穷大inf，根据符号位不同可以分为+inf和-inf。小数位不全为0，表示NaN。</li>
+<li>规格数和非规格数拼接起来才是一个完整的取值范围。</li>
+<li>所以fp16最大是 二进制 ±1.1111111111×2^11110 &#x3D;&gt; 十进制±(1+1023&#x2F;1024)×2^15 &#x3D; ±65504；最小是1&#x2F;2024×2^(-14) &#x3D; 5.96E−8。也就是fp16的动态范围为（5.96E−8 ~ 65504）</li>
+<li>fp32（8指数+23尾数+1符号）的动态范围为(1.4E-45 ~ 3.40E38)，bf16相当于尾数位为7的fp32，动态范围是（9.2E−41~3.38E38），也就是<strong>牺牲精度换来高取值范围</strong>。</li>
+</ul>
+<h2 id="混合精度"><a href="#混合精度" class="headerlink" title="混合精度"></a>混合精度</h2><p>混合精度就是通过一些设计，使得我们可以享受半精度的优点，又可以一定程度规避数据溢出和舍入误差（超小值被忽略导致误差）。</p>
+<ul>
+<li>我们使用 fp32 权重作为精确的 “主权重 (master weight)”进行备份，而其他所有值（weights，activations， gradients）均使用 fp16 进行计算以提高训练速度，最后在梯度更新阶段再使用半精度的梯度更新单精度的主权重，这样当很小的梯度乘上学习率后要跟权重（fp32的）做运算时，就不会被舍弃了。</li>
+<li>由于 fp16 混合精度大大减少了内存需求, 并可以实现更快的速度, 因此只有在在此训练模式下表现不佳时, 才考虑不使用混合精度训练。</li>
+</ul>
+<h1 id="🔥新的激活函数"><a href="#🔥新的激活函数" class="headerlink" title="🔥新的激活函数"></a>🔥新的激活函数</h1><p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E6%96%B0%E7%9A%84%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0.jpg" alt="新的激活函数"><br>下列公式中 σ 即 sigmoid 函数，σ(x) &#x3D; 1 &#x2F; (1 + exp(-x)) 。</p>
+<ol>
+<li>GLU：GLU(x) &#x3D; (xW + b) ⊗ σ(xV + c)；</li>
+<li>Swish：Swish(x) &#x3D; x · σ(x)；</li>
+<li>SwiGLU：SwiGLU(x, W, V, b, c) &#x3D; Swish_1(xW + b) ⊗ (xV + c) ，其中Swish_β(x) &#x3D; x σ(β x)，⊗是哈达玛积（对位元素乘）；<blockquote>
+<p>SwiGLU函数可以提升性能，有可微性、自适应性（因为GLU是一种类似于长短期记忆网络（LSTM）带有门机制的网络结构，通过门机制控制信息通过的比例，来让模型自适应地选择哪些单词和特征对预测下一个词有帮助）。</p>
+</blockquote>
+</li>
+<li>GELU：GELU(x) &#x3D; x · P(X⩽x) &#x3D; x · Φ(x)，其中Φ(x)表示正态分布的累积分布函数。</li>
+</ol>
+<h1 id="🔥归一化"><a href="#🔥归一化" class="headerlink" title="🔥归一化"></a>🔥归一化</h1><p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E5%BD%92%E4%B8%80%E5%8C%96%E5%85%AC%E5%BC%8F.png" alt="归一化公式"></p>
+<ul>
+<li>归一化统一公式，包括了归一化和仿射变换（γx+β）。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/BN%E5%92%8CLN.png" alt="BN和LN"></li>
+<li>Batch Normalization和Layer Normalization的区别：BN就是对整个batch的数据的特征进行逐一归一化，也就是每个特征各自归一化。LN则是单个样本的所有特征进行归一化。</li>
+<li>RMSNorm：对x求均方根，然后直接仿射变换，不计算方差和均值，降低计算量。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/DyT%E5%85%AC%E5%BC%8F.png" alt="DyT公式"></li>
+<li>Dynamic Tanh：将x映射到tanh，获得非线性能力，α也是可学习的动态缩放因子。可以大大提升计算效率，性能指标大差不差甚至可能提升。是传统归一化的很好替代方案。</li>
+</ul>
+<h1 id="🔥位置编码"><a href="#🔥位置编码" class="headerlink" title="🔥位置编码"></a>🔥位置编码</h1><h2 id="正弦编码"><a href="#正弦编码" class="headerlink" title="正弦编码"></a>正弦编码</h2><p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E6%AD%A3%E5%BC%A6%E7%BC%96%E7%A0%81%E7%9A%84%E9%97%AE%E9%A2%98.png" alt="正弦编码的问题"></p>
+<ul>
+<li>t是绝对位置，w是频率（<code>w=b^(-2d/D)</code>）。</li>
+<li>最早transformer的位置编码是正弦编码，是绝对位置，相对位置的表达能力不足。上图中位置编码点积仅仅与相对位置k相关，但通过注意力计算后矩阵乘法会削弱这种关系。</li>
+<li>所以好的位置编码要 1、每个位置编码唯一；2、有良好的外推性（训练时短，推理时仍然能应对长的）；3、不同句子相同相对位置时，相关性应该一致。</li>
+</ul>
+<h2 id="RoPE"><a href="#RoPE" class="headerlink" title="RoPE"></a>RoPE</h2><p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/RoPE.png" alt="RoPE"></p>
+<ul>
+<li>旋转位置编码RoPE：m，n是两个不同位置的token，对每个token计算q、k，然后分别与旋转矩阵进行乘法（第一个式子），最后两者相乘（第二个式子），也就是直接将旋转位置编码直接参与注意力计算，而非在嵌入层（embedding）进行编码后再与原向量相加。</li>
+<li><code>θ=b^(-2d/D)</code>，b是固定的基数，d是当前隐藏层所处维度（也就是特征向量的特征索引），D是隐藏层维度，这样高维度旋转慢，负责捕捉长距离信息；低维度旋转快，负责捕捉细节。</li>
+<li>可以看到两个位置的RoPE计算点积时自带相对距离<code>m-n</code>，对相对位置敏感。</li>
+<li>RoPE外推限制性：每个位置的θ在预训练时是固定的，θ整体的分布也是固定的（b不变），无法适应更长的序列，需要采取插值的方法应对。</li>
+<li>RoPE插值：<ol>
+<li>线性插值PI：通过比例缩放<code>L/L&#39;</code>将位置（公式中m、n）从预训练的序列长度L映射到新的序列长度L’。</li>
+<li>非线性插值NTK-Aware scaled：改变θ公式中的基数b。</li>
+<li>基于波长局部分段插值NTK-by-parts：计算波长<code>λ=2π/θ</code>，根据序列与波长比值<code>L/λ</code>，对不同维度进行不同策略插值。</li>
+<li><strong>Yarn</strong>：在3的基础上引入温度因子t，在计算注意力时qk点积除以一个t，来缓解插值对点积结果增大影响长上下文理解的问题。</li>
+</ol>
+</li>
+</ul>
+<h1 id="🔥强化学习"><a href="#🔥强化学习" class="headerlink" title="🔥强化学习"></a>🔥强化学习</h1><h2 id="PPO"><a href="#PPO" class="headerlink" title="PPO"></a>PPO</h2><ul>
+<li>四个模型：actor（要训练的模型）、critic（预测当前动作的价值）、reward（计算当前价值）、reference（和actor初始化一致，防止模型训练偏离原模型太远）。RLHF过程中<strong>reward&#x2F;reference两个模型不会更新</strong>。</li>
+<li>reward相当于critic的学习目标，reference则是actor的约束（也算是目标之一吧）。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/actor%E7%9A%84%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0.png" alt="actor的损失函数"></li>
+<li>actor的损失：如上，内核是<code>优势Adv</code>，它表示critic和reward的输出的差值，也就是实际收益和预测收益之差。P代表概率，收益越高的动作，其概率应该越高。<code>Pold</code>表示参考模型的概率，奖励的计算还引入KL散度，是为了不让模型变化太大。clip是裁切，控制上下限。</li>
+<li>总的来说，actor的损失就是：<strong>在critic对价值（Vt）的预测准确的前提下，尽可能采取最高价值的动作，并且不太偏离原模型。</strong></li>
+<li>critic的损失：就是优势的平方。</li>
+</ul>
+<h2 id="DPO"><a href="#DPO" class="headerlink" title="DPO"></a>DPO</h2><ul>
+<li>DPO直接偏好对齐，本质上是SFT的分类任务而不是强化学习，<strong>去掉了奖励模型和强化学习过程</strong>，直接使用<strong>偏好数据</strong>来微调。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/DPO.png" alt="DPO"></li>
+<li>DPO的损失如上，E是期望，β是超参数控制正则化强度，π是模型输出的概率，yw和yl代表偏好数据对（也就是两个回答），w是更好的结果，l是更差的。其它和PPO类似，也是要用KL散度。</li>
+<li>DPO的目标就是通过似然函数尽可能<strong>拉大模型对两个答案的评价</strong>，以让模型区分回答的好与坏。</li>
+</ul>
+<h2 id="GRPO"><a href="#GRPO" class="headerlink" title="GRPO"></a>GRPO</h2><p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/GRPO.png" alt="GRPO"></p>
+<ul>
+<li>相比于PPO，GRPO结构可以说相当简单，GRPO在PPO的基础上去掉了critic模型，也就是不预测V，而是一次采样多个输出，得到多个奖励r，统计均值和标准差，用来计算优势A，A<sub>i</sub>&#x3D;(r<sub>i</sub>-均值)&#x2F;标准差。</li>
+<li>还可以看到，PPO的KL散度在计算r的时候算到（也就是PPO把KL当做奖励的一部分），而GRPO的散度在损失函数算到（也就是GRPO把KL当做损失的一部分）。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/GRPO%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0.png" alt="GRPO损失函数"></li>
+<li>损失函数如上，来自两部分，第一部分就是min，也就是PPO的公式；第二部分则是KL散度。</li>
+<li>两句话小结GRPO：<ol>
+<li>GRPO是什么：把A看成一种评分的话，该算法就是让奖励模型给LLM的输出直接评分，评分直接计算损失（只不过依然要考虑不能过度偏离参考模型）。</li>
+<li>GRPO和PPO的区别：有&#x2F;无critic模型（这改变了A的算法）、KL散度计算位置不一样。这两个也是损失函数的区别。</li>
+</ol>
+</li>
+</ul>
+]]></content>
   </entry>
   <entry>
     <title>大模型微调：SFT（LoRA、Prefix）和RLHF</title>
