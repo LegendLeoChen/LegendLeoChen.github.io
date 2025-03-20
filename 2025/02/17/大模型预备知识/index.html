@@ -93,7 +93,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">3k</span>
+            <span class="post-count">3.7k</span>
         </span>
     </span>
 
@@ -102,7 +102,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">11 分钟</span>
+            <span class="post-count">13 分钟</span>
         </span>
     </span>
 </div>
@@ -184,14 +184,16 @@
 <h1 id="🔥位置编码"><a href="#🔥位置编码" class="headerlink" title="🔥位置编码"></a>🔥位置编码</h1><h2 id="正弦编码"><a href="#正弦编码" class="headerlink" title="正弦编码"></a>正弦编码</h2><p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E6%AD%A3%E5%BC%A6%E7%BC%96%E7%A0%81%E7%9A%84%E9%97%AE%E9%A2%98.png" alt="正弦编码的问题"></p>
 <ul>
 <li>t是绝对位置，w是频率（<code>w=b^(-2d/D)</code>）。</li>
-<li>最早transformer的位置编码是正弦编码，是绝对位置，相对位置的表达能力不足。上图中位置编码点积仅仅与相对位置k相关，但通过注意力计算后矩阵乘法会削弱这种关系。</li>
+<li>最早transformer的位置编码是正弦编码，通过正余弦公式为序列不同位置编码，然后加上嵌入向量就是最终的表达。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E6%AD%A3%E5%BC%A6%E7%BC%96%E7%A0%81%E5%8F%AF%E8%A7%86%E5%8C%96.png" alt="正弦编码可视化"></li>
+<li>但对于高维度特征的相对位置的表达能力不足。位置编码点积仅仅与相对位置k相关，但通过注意力计算后矩阵乘法会削弱这种关系。上图中高纬度的编码区别已经不是很大了。</li>
 <li>所以好的位置编码要 1、每个位置编码唯一；2、有良好的外推性（训练时短，推理时仍然能应对长的）；3、不同句子相同相对位置时，相关性应该一致。</li>
 </ul>
 <h2 id="RoPE"><a href="#RoPE" class="headerlink" title="RoPE"></a>RoPE</h2><p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/RoPE.png" alt="RoPE"></p>
 <ul>
 <li>旋转位置编码RoPE：m，n是两个不同位置的token，对每个token计算q、k，然后分别与旋转矩阵进行乘法（第一个式子），最后两者相乘（第二个式子），也就是直接将旋转位置编码直接参与注意力计算，而非在嵌入层（embedding）进行编码后再与原向量相加。</li>
 <li><code>θ=b^(-2d/D)</code>，b是固定的基数，d是当前隐藏层所处维度（也就是特征向量的特征索引），D是隐藏层维度，这样高维度旋转慢，负责捕捉长距离信息；低维度旋转快，负责捕捉细节。</li>
-<li>可以看到两个位置的RoPE计算点积时自带相对距离<code>m-n</code>，对相对位置敏感。</li>
+<li>可以看到两个位置的RoPE计算点积时自带相对距离<code>m-n</code>，对相对位置敏感。<br><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/RoPE%E5%8F%AF%E8%A7%86%E5%8C%96.png" alt="RoPE可视化"></li>
+<li>如上图，对于长文本，旋转位置编码在词附近会提供更多注意力，远离词时也能有固定震荡的注意力。</li>
 <li>RoPE外推限制性：每个位置的θ在预训练时是固定的，θ整体的分布也是固定的（b不变），无法适应更长的序列，需要采取插值的方法应对。</li>
 <li>RoPE插值：<ol>
 <li>线性插值PI：通过比例缩放<code>L/L&#39;</code>将位置（公式中m、n）从预训练的序列长度L映射到新的序列长度L’。</li>
@@ -223,6 +225,38 @@
 <li>GRPO和PPO的区别：有&#x2F;无critic模型（这改变了A的算法）、KL散度计算位置不一样。这两个也是损失函数的区别。</li>
 </ol>
 </li>
+</ul>
+<h1 id="🔥思维链CoT"><a href="#🔥思维链CoT" class="headerlink" title="🔥思维链CoT"></a>🔥思维链CoT</h1><ul>
+<li>标准思维链，在提供模型题目和答案的同时，需要编写得出答案的思考过程，过程可能是链式的逐步思考，也可能每一步都有多种假设。需要手工撰写，比较费力。</li>
+</ul>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/Zero-Shot-CoT.png" alt="Zero-Shot CoT"></p>
+<ul>
+<li>Zero-Shot CoT：不需要撰写思考过程，而是告诉模型“逐步思考”即可，模型就会自己去完成思考过程。然后把思考过程拼接到问题上，模型给出最后的答案。无需标注，但这比较依赖模型本身的思考能力。</li>
+</ul>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/Auto-CoT.png" alt="Auto CoT"></p>
+<ul>
+<li>Auto CoT：就是<strong>提供few-shot的zero-shot CoT</strong><ol>
+<li>在zero-shot CoT的基础上实现，首先有一个问题库存放所有问题，使用Bert对问题进行表达，然后对表达进行K-means聚类。</li>
+<li>当用户输入问题，可以从聚类中找到类似的问题，对这些问题进行zero-shot CoT生成prompt，然后和用户问题进行拼接后给予“逐步思考”的提示即可。</li>
+<li>该方法依然不需要标注，性能超过one-shot CoT。</li>
+</ol>
+</li>
+</ul>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/%E6%80%9D%E7%BB%B4%E6%A0%91ToT.png" alt="思维树ToT"></p>
+<ul>
+<li>思维树ToT：三思而后行<ol>
+<li>拆解：将复杂问题拆分成多个简单子问题，每个子问题的解答过程对应一个<br>   思维过程。</li>
+<li>衍生：模型需要根据当前子问题生成可能的下一步推理方向。衍生有两种模式：样本启发和命令提示。</li>
+<li>评估：利用模型评估推理节点合理性。根据任务是否便于量化评分，选择投票或打分模式。</li>
+<li>搜索：从一个或多个当前状态出发，搜索通往问题解决方案的路径。可以用广度优先、深度优先、A*等算法实现。</li>
+</ol>
+</li>
+</ul>
+<p><img src="/2025/02/17/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/self-consistency.png" alt="Self-Consistency"></p>
+<ul>
+<li>Self-Consistency：集思广益，引入多样推理路径，也就是思考多次，最终选择最合适的答案。该方法可以与其它CoT方法一起使用。</li>
+<li>步骤很简单，模型生成多个思维链答案，然后统计每个答案的频率，选择最高的那个作为最终答案。 </li>
+<li>Universal Self-Consistency：对于无法给出一个确切答案的问题（摘要等），可以整合答案让大模型自己选。</li>
 </ul>
  
       <!-- reward -->
