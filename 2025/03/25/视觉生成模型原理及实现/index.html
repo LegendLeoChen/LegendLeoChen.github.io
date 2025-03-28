@@ -89,7 +89,7 @@
   <time datetime="2025-03-25T08:34:47.000Z" itemprop="datePublished">2025-03-25</time>
 </a> 
   <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a>
+    <a class="article-category-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a> / <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
   </div>
   
 <div class="word_count">
@@ -97,7 +97,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">2k</span>
+            <span class="post-count">2.6k</span>
         </span>
     </span>
 
@@ -106,7 +106,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">9 分钟</span>
+            <span class="post-count">12 分钟</span>
         </span>
     </span>
 </div>
@@ -205,9 +205,9 @@
 </ul>
 <h2 id="DDPM（UNet）"><a href="#DDPM（UNet）" class="headerlink" title="DDPM（UNet）"></a>DDPM（UNet）</h2><p><img src="/2025/03/25/%E8%A7%86%E8%A7%89%E7%94%9F%E6%88%90%E6%A8%A1%E5%9E%8B%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E7%8E%B0/DDPM.png" alt="DDPM"></p>
 <ul>
-<li>现在实现一下DDPM，也就是UNet这部分。</li>
+<li>现在实现一下扩散模型（DDPM），也就是UNet这部分。</li>
 </ul>
-<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">UNet_Transformer</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
+<h3 id="模型"><a href="#模型" class="headerlink" title="模型"></a>模型</h3><pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">UNet_Transformer</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
     <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> in_channels<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> time_dim<span class="token operator">=</span><span class="token number">256</span><span class="token punctuation">,</span> context_dim<span class="token operator">=</span><span class="token number">512</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
         super<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
@@ -251,7 +251,7 @@
 <li>UNet结构就是先下采样，然后通过中间块，最后上采样输出即可。</li>
 <li>和前面的VAE相比就是再上下采样之间用了一个中间块。并且<code>_down_block</code>、<code>_up_conv</code>都不仅是卷积，而是融合resnet和transformer的结构，学习能力更强。</li>
 </ul>
-<h2 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h2><ul>
+<h3 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h3><ul>
 <li>接下来通过部分代码简要地看看如何训练整个 CLIP + UNet（transformer）的diffusion模型：</li>
 </ul>
 <pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span>n_epochs<span class="token punctuation">)</span><span class="token punctuation">:</span>
@@ -287,7 +287,7 @@
 <li>数据集是图-文本对，对文本分词后，先使用网上预训练好的CLIP对文本进行编码，然后用噪声器添加随机噪声（噪声添加步数也随机）。</li>
 <li>然后把文本、图片、噪声步数一同输入到模型当中。计算损失就是把预测的噪声和实际噪声算均方误差，后面就是基本流程了。</li>
 </ul>
-<h2 id="测试（生成）"><a href="#测试（生成）" class="headerlink" title="测试（生成）"></a>测试（生成）</h2><ul>
+<h3 id="测试（生成）"><a href="#测试（生成）" class="headerlink" title="测试（生成）"></a>测试（生成）</h3><ul>
 <li>训练好的模型可以根据噪声和文本生成图像了，这时候就不用输入原图了，直接随机初始化噪声图作为输入进行去噪：</li>
 </ul>
 <pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">sample_cfg</span><span class="token punctuation">(</span>model<span class="token punctuation">,</span> noise_scheduler<span class="token punctuation">,</span> n_samples<span class="token punctuation">,</span> in_channels<span class="token punctuation">,</span> text_embeddings<span class="token punctuation">,</span> image_size<span class="token operator">=</span><span class="token number">64</span><span class="token punctuation">,</span> guidance_scale<span class="token operator">=</span><span class="token number">3.0</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
@@ -350,6 +350,86 @@
                 img_pil <span class="token operator">=</span> Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>img<span class="token punctuation">)</span>
                 img_pil<span class="token punctuation">.</span>save<span class="token punctuation">(</span>f<span class="token string">'diffusion_results/generated_image_epoch_{epoch+1}_sample_{i}.png'</span><span class="token punctuation">)</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="Stable-Diffusion"><a href="#Stable-Diffusion" class="headerlink" title="Stable Diffusion"></a>Stable Diffusion</h2><h3 id="模型-1"><a href="#模型-1" class="headerlink" title="模型"></a>模型</h3><ul>
+<li>接下来就是完整的CLIP + UNet + VAE的SD结构了，模型结构就是把VAE和UNet组合：</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">StableDiffusion</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> in_channels<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> latent_dim<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">,</span> image_size<span class="token operator">=</span><span class="token number">512</span><span class="token punctuation">,</span> diffusion_timesteps<span class="token operator">=</span><span class="token number">1000</span><span class="token punctuation">,</span> device<span class="token operator">=</span><span class="token string">"cuda"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        super<span class="token punctuation">(</span>StableDiffusion<span class="token punctuation">,</span> self<span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># VAE</span>
+        self<span class="token punctuation">.</span>vae <span class="token operator">=</span> VAE<span class="token punctuation">(</span>in_channels<span class="token operator">=</span>in_channels<span class="token punctuation">,</span> latent_dim<span class="token operator">=</span>latent_dim<span class="token punctuation">,</span> image_size<span class="token operator">=</span>image_size<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># Diffusion model (UNet)</span>
+        self<span class="token punctuation">.</span>unet <span class="token operator">=</span> UNet_Transformer<span class="token punctuation">(</span>in_channels<span class="token operator">=</span>latent_dim<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># Noise scheduler</span>
+        self<span class="token punctuation">.</span>noise_scheduler <span class="token operator">=</span> NoiseScheduler<span class="token punctuation">(</span>num_timesteps<span class="token operator">=</span>diffusion_timesteps<span class="token punctuation">,</span> device<span class="token operator">=</span>device<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">encode</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>vae<span class="token punctuation">.</span>encode<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">def</span> <span class="token function">decode</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> z<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>vae<span class="token punctuation">.</span>decode<span class="token punctuation">(</span>z<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">diffuse</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> latents<span class="token punctuation">,</span> t<span class="token punctuation">,</span> context<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>unet<span class="token punctuation">(</span>latents<span class="token punctuation">,</span> t<span class="token punctuation">,</span> context<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> latents<span class="token punctuation">,</span> t<span class="token punctuation">,</span> context<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        noise_pred <span class="token operator">=</span> self<span class="token punctuation">.</span>diffuse<span class="token punctuation">(</span>latents<span class="token punctuation">,</span> t<span class="token punctuation">,</span> context<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> noise_pred
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>这里VAE已经是预训练好的，所以训练时只要更新UNet即可。</li>
+</ul>
+<h3 id="训练-1"><a href="#训练-1" class="headerlink" title="训练"></a>训练</h3><pre class="line-numbers language-python"><code class="language-python">    <span class="token comment" spellcheck="true"># 训练模型</span>
+    <span class="token keyword">for</span> batch <span class="token keyword">in</span> train_dataloader<span class="token punctuation">:</span>
+        latents <span class="token operator">=</span> batch<span class="token punctuation">[</span><span class="token string">"latents"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+        text <span class="token operator">=</span> batch<span class="token punctuation">[</span><span class="token string">"text"</span><span class="token punctuation">]</span>
+
+        <span class="token comment" spellcheck="true"># 添加噪声</span>
+        timesteps <span class="token operator">=</span> torch<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> num_timesteps<span class="token punctuation">,</span> <span class="token punctuation">(</span>latents<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">,</span> device<span class="token operator">=</span>device<span class="token punctuation">)</span><span class="token punctuation">.</span>long<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        noisy_latents<span class="token punctuation">,</span> noise <span class="token operator">=</span> model<span class="token punctuation">.</span>noise_scheduler<span class="token punctuation">.</span>add_noise<span class="token punctuation">(</span>latents<span class="token punctuation">,</span> timesteps<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># 使用 CLIP 模型编码文本</span>
+        text_inputs <span class="token operator">=</span> tokenizer<span class="token punctuation">(</span>text<span class="token punctuation">,</span> padding<span class="token operator">=</span><span class="token string">"max_length"</span><span class="token punctuation">,</span> max_length<span class="token operator">=</span>tokenizer<span class="token punctuation">.</span>model_max_length<span class="token punctuation">,</span> truncation<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> return_tensors<span class="token operator">=</span><span class="token string">"pt"</span><span class="token punctuation">)</span>
+        text_embeddings <span class="token operator">=</span> text_encoder<span class="token punctuation">(</span>text_inputs<span class="token punctuation">.</span>input_ids<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>last_hidden_state
+
+        <span class="token comment" spellcheck="true"># 预测噪声</span>
+        noise_pred <span class="token operator">=</span> model<span class="token punctuation">(</span>noisy_latents<span class="token punctuation">,</span> timesteps<span class="token punctuation">,</span> text_embeddings<span class="token punctuation">)</span>
+        mse_loss <span class="token operator">=</span> F<span class="token punctuation">.</span>mse_loss<span class="token punctuation">(</span>noise_pred<span class="token punctuation">,</span> noise<span class="token punctuation">)</span>
+        div_loss <span class="token operator">=</span> diversity_loss<span class="token punctuation">(</span>noisy_latents<span class="token punctuation">,</span> use_cosine<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># 计算去噪后的潜在表示</span>
+        alpha_t <span class="token operator">=</span> model<span class="token punctuation">.</span>noise_scheduler<span class="token punctuation">.</span>alphas<span class="token punctuation">[</span>timesteps<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> None<span class="token punctuation">,</span> None<span class="token punctuation">,</span> None<span class="token punctuation">]</span>
+        sqrt_alpha_t <span class="token operator">=</span> torch<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>alpha_t<span class="token punctuation">)</span>
+        sqrt_one_minus_alpha_t <span class="token operator">=</span> torch<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">-</span> alpha_t<span class="token punctuation">)</span>
+        predicted_latents <span class="token operator">=</span> <span class="token punctuation">(</span>noisy_latents <span class="token operator">-</span> sqrt_one_minus_alpha_t <span class="token operator">*</span> noise_pred<span class="token punctuation">)</span> <span class="token operator">/</span> sqrt_alpha_t
+        cons_loss <span class="token operator">=</span> F<span class="token punctuation">.</span>mse_loss<span class="token punctuation">(</span>predicted_latents<span class="token punctuation">,</span> latents<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># 组合损失</span>
+        total_loss <span class="token operator">=</span> mse_loss <span class="token operator">+</span> diversity_weight <span class="token operator">*</span> div_loss <span class="token operator">+</span> cons_loss <span class="token operator">*</span> current_lambda_cons
+        epoch_loss <span class="token operator">+=</span> total_loss<span class="token punctuation">.</span>item<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        num_batches <span class="token operator">+=</span> <span class="token number">1</span>
+
+        optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        total_loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        torch<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>utils<span class="token punctuation">.</span>clip_grad_norm_<span class="token punctuation">(</span>model<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> max_norm<span class="token operator">=</span><span class="token number">1.0</span><span class="token punctuation">)</span>
+        optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        scheduler<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># OneCycleLR 学习率调度器</span>
+
+        <span class="token comment" spellcheck="true"># 动态调整多样性损失的权重</span>
+        <span class="token keyword">if</span> epoch <span class="token operator">%</span> <span class="token number">10</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            diversity_weight <span class="token operator">=</span> min<span class="token punctuation">(</span>diversity_weight <span class="token operator">*</span> <span class="token number">1.05</span><span class="token punctuation">,</span> <span class="token number">0.1</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 逐渐增加权重，但设置上限</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>训练流程（部分代码）和之前DDPM部分区别不大，这里数据集的<code>train_dataloader</code>里的数据已经被VAE下采样过了，所以直接配合嵌入好的文本输入模型，UNet会利用网络和公式预测噪声用于损失计算。</li>
+<li>损失分为<strong>噪声损失</strong>、<strong>多样性损失</strong>和<strong>去噪后特征的损失</strong>。</li>
+</ul>
+<h3 id="测试（生成）-1"><a href="#测试（生成）-1" class="headerlink" title="测试（生成）"></a>测试（生成）</h3><ul>
+<li>代码和之前一样，就不展示了，就多了一个，在UNet输出子空间表示时，用VAE解码成正常图片的信息：<code>sampled_images = model.decode(sampled_latents)</code></li>
+</ul>
+<h1 id="🔥总结"><a href="#🔥总结" class="headerlink" title="🔥总结"></a>🔥总结</h1><ul>
+<li>本文记录了stable diffusion（SD）的框架及其组件细节。并通过理解开源代码了解了网络结构搭建（VAE、UNet、SD）、训练过程（CLIP+UNet、SD）以及生成过程（CLIP+UNet、SD）。</li>
+<li>总的来说，SD的网络结构结合了CNN和transformer，本质是一个视觉模型。而模型生成过程就是：CLIP嵌入文本（可选）、生成噪声图像、VAE编码图文、UNet预测噪声、VAE解码出图。而训练不需要生成的图，可以去掉最后一步。模型当中的组件也都是可以换成更优秀的结构。</li>
+</ul>
  
       <!-- reward -->
       
@@ -407,7 +487,7 @@
 </div>
 
 <div id="share-mask"></div>  
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/AIGC/" rel="tag">AIGC</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/LLM/" rel="tag">LLM</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/AIGC/" rel="tag">AIGC</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/LLM/" rel="tag">LLM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/" rel="tag">Python</a></li></ul>
 
     </footer>
   </div>
