@@ -601,7 +601,7 @@
 
     
     <article
-  id="post-大模型微调：SFT（LoRA、Prefix）和RLHF"
+  id="post-大模型微调：SFT和RLHF"
   class="article article-type-post"
   itemscope
   itemprop="blogPost"
@@ -612,8 +612,8 @@
     <header class="article-header">
        
 <h2 itemprop="name">
-  <a class="article-title" href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/"
-    >大模型微调：SFT（LoRA、Prefix）和RLHF</a> 
+  <a class="article-title" href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/"
+    >大模型微调：SFT和RLHF</a> 
 </h2>
  
 
@@ -621,7 +621,7 @@
     </header>
      
     <div class="article-meta">
-      <a href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/" class="article-date">
+      <a href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/" class="article-date">
   <time datetime="2025-02-06T12:22:13.000Z" itemprop="datePublished">2025-02-06</time>
 </a> 
   <div class="article-category">
@@ -632,8 +632,10 @@
       
     <div class="article-entry" itemprop="articleBody">
        
-  <p>本次借助huggingface平台下载大模型和数据集，并在本地尝试进行微调，目的是跑通并体验微调过程。微调使用的是参数高效微调也就是PEFT，策略是有监督微调SFT（LoRA和Prefix）和RLHF。</p> 
-      <a class="article-more-link" href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/"
+  <ul>
+<li>微调按参数对象分为<strong>高效参数微调PEFT</strong>和<strong>全参量微调FFT</strong>，按策略分为<strong>监督微调SFT</strong>和<strong>基于人类反馈的强化学习RLHF</strong>。</li>
+<li>本次借助huggingface平台下载大模型和数据集，并在本地尝试进行微调，目的是跑通并体验微调过程。将依次进行三个，分别是SFT方法（PEFT的LoRA、Prefix），以及RLHF方法（PEFT或FFT）。</li></ul> 
+      <a class="article-more-link" href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/"
         >阅读更多...</a
       >
        

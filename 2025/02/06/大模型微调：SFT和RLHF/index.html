@@ -13,7 +13,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1"
       />
-      <title>大模型微调：SFT（LoRA、Prefix）和RLHF |  LegendLeo Chen 的空间</title>
+      <title>大模型微调：SFT和RLHF |  LegendLeo Chen 的空间</title>
   <meta name="generator" content="hexo-theme-ayer">
       
       <link rel="shortcut icon" href="/mylogo.ico" />
@@ -66,7 +66,7 @@
     <main class="content on">
       <section class="outer">
   <article
-  id="post-大模型微调：SFT（LoRA、Prefix）和RLHF"
+  id="post-大模型微调：SFT和RLHF"
   class="article article-type-post"
   itemscope
   itemprop="blogPost"
@@ -77,7 +77,7 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  大模型微调：SFT（LoRA、Prefix）和RLHF
+  大模型微调：SFT和RLHF
 </h1>
  
 
@@ -85,7 +85,7 @@
     </header>
      
     <div class="article-meta">
-      <a href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/" class="article-date">
+      <a href="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/" class="article-date">
   <time datetime="2025-02-06T12:22:13.000Z" itemprop="datePublished">2025-02-06</time>
 </a> 
   <div class="article-category">
@@ -97,7 +97,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">3.6k</span>
+            <span class="post-count">3.7k</span>
         </span>
     </span>
 
@@ -121,10 +121,13 @@
   
     <div class="article-entry" itemprop="articleBody">
        
-  <p>本次借助huggingface平台下载大模型和数据集，并在本地尝试进行微调，目的是跑通并体验微调过程。微调使用的是参数高效微调也就是PEFT，策略是有监督微调SFT（LoRA和Prefix）和RLHF。<span id="more"></span><br><strong>注意：huggingface下载都是需要代理的，文中出现的python库自行用pip安装即可。</strong></p>
+  <ul>
+<li>微调按参数对象分为<strong>高效参数微调PEFT</strong>和<strong>全参量微调FFT</strong>，按策略分为<strong>监督微调SFT</strong>和<strong>基于人类反馈的强化学习RLHF</strong>。</li>
+<li>本次借助huggingface平台下载大模型和数据集，并在本地尝试进行微调，目的是跑通并体验微调过程。将依次进行三个，分别是SFT方法（PEFT的LoRA、Prefix），以及RLHF方法（PEFT或FFT）。<span id="more"></span><br><strong>注意：huggingface下载都是需要代理的，文中出现的python库自行用pip安装即可。</strong></li>
+</ul>
 <h1 id="🔥模型下载"><a href="#🔥模型下载" class="headerlink" title="🔥模型下载"></a>🔥模型下载</h1><p><a target="_blank" rel="noopener" href="https://huggingface.co/">huggingface</a>上选择模型，这里以Qwen&#x2F;Qwen2.5-3B-Instruct为例。</p>
 <ul>
-<li><p>如下图可以直接在界面中的files and versions中下载模型，把所有文件下载进一个文件夹即可。<br><img src="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/%E6%A8%A1%E5%9E%8B%E9%80%89%E6%8B%A9.jpg" alt="huggingface模型界面"></p>
+<li><p>如下图可以直接在界面中的files and versions中下载模型，把所有文件下载进一个文件夹即可。<br><img src="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/%E6%A8%A1%E5%9E%8B%E9%80%89%E6%8B%A9.jpg" alt="huggingface模型界面"></p>
 </li>
 <li><p>也可以通过命令行一次性下载，先通过<code>pip install -U huggingface_hub</code>安装命令行工具，在cmd中通过以下指令登录huggingface并下载模型：</p>
 </li>
@@ -150,7 +153,7 @@ os<span class="token punctuation">.</span>environ<span class="token punctuation"
 dataset <span class="token operator">=</span> load_dataset<span class="token punctuation">(</span><span class="token string">"LooksJuicy/ruozhiba"</span><span class="token punctuation">,</span> split<span class="token operator">=</span><span class="token string">'train'</span><span class="token punctuation">)</span>
 dataset<span class="token punctuation">.</span>save_to_disk<span class="token punctuation">(</span><span class="token string">"./datasets/ruozhiba"</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 保存到该目录下</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><img src="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/%E6%95%B0%E6%8D%AE%E9%9B%86%E6%A0%BC%E5%BC%8F.jpg" alt="数据集格式"></p>
+<p><img src="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/%E6%95%B0%E6%8D%AE%E9%9B%86%E6%A0%BC%E5%BC%8F.jpg" alt="数据集格式"></p>
 <ul>
 <li>这样只是下载源文件没有进行处理，在官网可以预览文件内容如上，该数据集由 instruction 和 output 组成，比较简单。</li>
 <li>我们可以直接通过如下代码进行预处理，思路就是缓存数据集源文件并转换成可以用于训练的message（json格式），最后保存到json文件当中，这次不划分数据集，直接全部用于训练。</li>
@@ -290,7 +293,7 @@ output <span class="token operator">=</span> pipe<span class="token punctuation"
 <span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span>output<span class="token punctuation">)</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><img src="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/%E6%B5%8B%E8%AF%95.png" alt="测试结果"></p>
+<p><img src="/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/%E6%B5%8B%E8%AF%95.png" alt="测试结果"></p>
 <ul>
 <li>可以看到模型是可以应对弱智吧的问题。</li>
 </ul>
@@ -557,6 +560,7 @@ trainer<span class="token punctuation">.</span>save_model<span class="token punc
 <ul>
 <li>最后是训练主流程，这就和SFT差不多了，就是加载模型和数据集、配置微调参数、定义GRPO算法的训练器，就可以训练了。</li>
 <li>所以整体代码就是多了奖励函数，还有为了方便判断结果要用提示词引导模型，毕竟核心的GRPO算法已经被集成到库里了，调用就行。</li>
+<li><code>peft_config</code>这里可以像前面SFT部分一样设置LoRA之类的PEFT方法，不设置就是全量微调。</li>
 </ul>
 <h2 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h2><ul>
 <li>由于训练不太可能全跑完，所以观察到了有改善就停了。</li>
@@ -620,7 +624,7 @@ Extracted:
 <li>最后训练了几百题之后，模型就可以稳定地按格式回答问题，并且对于不复杂的题目基本都能做对了（Answer是数据集正确答案，Extracted是模型回答中提取的答案）。说明RLHF是有效果的，即便应对不怎么智能的小模型。</li>
 </ul>
 <h1 id="🔥总结"><a href="#🔥总结" class="headerlink" title="🔥总结"></a>🔥总结</h1><ul>
-<li>本次通过LoRA和Prefix方法体验了SFT微调，通过GRPO算法体验了RLHF微调，算是初步尝试了最主流的PEFT微调方案及其方法。</li>
+<li>本次通过LoRA和Prefix方法体验了SFT微调，通过GRPO算法体验了RLHF微调，算是初步尝试了最主流的微调方案及其方法。</li>
 <li>通过该方案可以比较容易地上手微调，但是微调本身还是很吃算力的，即便是这种参数高效微调对个人电脑也相当慢，效果也不一定好，像传统深度学习训练一样，也需要很多调整，强化学习就更是需要更多的时间和算力了。所以只是用于尝试和体验微调过程，丰富相关经验，增强知识的理解。</li>
 </ul>
  
@@ -675,7 +679,7 @@ Extracted:
     <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://legendleochen.top/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%EF%BC%88LoRA%E3%80%81Prefix%EF%BC%89%E5%92%8CRLHF/" alt="微信分享二维码">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://legendleochen.top/2025/02/06/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83%EF%BC%9ASFT%E5%92%8CRLHF/" alt="微信分享二维码">
     </div>
 </div>
 
