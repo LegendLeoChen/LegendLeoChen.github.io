@@ -1059,9 +1059,14 @@ Saving checkpoint shards: 100%<span class="token operator">|</span>████�
         <category>深度学习</category>
       </categories>
       <tags>
+        <tag>LLM</tag>
         <tag>Python</tag>
+        <tag>LORA</tag>
+        <tag>PEFT</tag>
         <tag>SAM2</tag>
+        <tag>LISA</tag>
         <tag>图像分割</tag>
+        <tag>VLLM</tag>
       </tags>
   </entry>
   <entry>
@@ -2150,14 +2155,9 @@ boundary_f1_scores <span class="token operator">=</span> <span class="token punc
         <category>深度学习</category>
       </categories>
       <tags>
-        <tag>LLM</tag>
         <tag>Python</tag>
-        <tag>LORA</tag>
-        <tag>PEFT</tag>
         <tag>SAM2</tag>
-        <tag>LISA</tag>
         <tag>图像分割</tag>
-        <tag>VLLM</tag>
       </tags>
   </entry>
   <entry>
