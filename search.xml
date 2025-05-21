@@ -201,6 +201,11 @@
       </tags>
   </entry>
   <entry>
+    <title>LISA图像分割模型的上手和微调</title>
+    <url>/2025/05/21/LISA%E5%9B%BE%E5%83%8F%E5%88%86%E5%89%B2%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8A%E6%89%8B%E5%92%8C%E5%BE%AE%E8%B0%83/</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
     <title>SAM2图像分割模型的微调</title>
     <url>/2025/05/07/SAM2%E5%9B%BE%E5%83%8F%E5%88%86%E5%89%B2%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%BE%AE%E8%B0%83/</url>
     <content><![CDATA[<p>Segment Anything Model 2（SAM 2）作为Meta公司发布的Segment Anything Model（SAM）的升级版本，在图像和视频分割领域展现出了显著的优点和特性。</p>
@@ -1286,8 +1291,14 @@ boundary_f1_scores <span class="token operator">=</span> <span class="token punc
         <category>深度学习</category>
       </categories>
       <tags>
+        <tag>LLM</tag>
         <tag>Python</tag>
+        <tag>LORA</tag>
+        <tag>PEFT</tag>
         <tag>SAM2</tag>
+        <tag>LISA</tag>
+        <tag>图像分割</tag>
+        <tag>VLLM</tag>
       </tags>
   </entry>
   <entry>
