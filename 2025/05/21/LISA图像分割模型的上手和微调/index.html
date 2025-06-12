@@ -121,7 +121,7 @@
   
     <div class="article-entry" itemprop="articleBody">
        
-  <h1 id="LISA系列"><a href="#LISA系列" class="headerlink" title="LISA系列"></a>LISA系列</h1><p>本文记录LISA系列的相关内容，任务为图像分割。LISA、LISA++仓库如下（两个分支）：</p>
+  <p>本文记录LISA系列的相关内容，任务为图像分割。LISA、LISA++仓库如下（两个分支）：</p>
 <p><a target="_blank" rel="noopener" href="https://github.com/dvlab-research/LISA">LISA</a></p>
 <p>LISA的这个仓库给了很完整的上手介绍，以及不算太复杂的训练、预测脚本，基本可以在其基础上做适配，而不用从头搞。</p>
 <span id="more"></span>
@@ -192,8 +192,7 @@ pip <span class="token function">install</span> flash-attn --no-build-isolation
 <p><img src="/2025/05/21/LISA%E5%9B%BE%E5%83%8F%E5%88%86%E5%89%B2%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8A%E6%89%8B%E5%92%8C%E5%BE%AE%E8%B0%83/%E5%AF%B9%E8%AF%9D%E6%95%88%E6%9E%9C2.png" alt="对话效果2"></p>
 <p><img src="/2025/05/21/LISA%E5%9B%BE%E5%83%8F%E5%88%86%E5%89%B2%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8A%E6%89%8B%E5%92%8C%E5%BE%AE%E8%B0%83/%E5%AF%B9%E8%AF%9D%E6%95%88%E6%9E%9C3.jpeg" alt="who is controlling the uav?"></p>
 <p>可以看到模型对文本的理解能力比较好地应用到了图像领域，这种抽象的理解能力是传统模型不可能做到的。</p>
-<p><img src="/2025/05/21/LISA%E5%9B%BE%E5%83%8F%E5%88%86%E5%89%B2%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8A%E6%89%8B%E5%92%8C%E5%BE%AE%E8%B0%83/%E5%AF%B9%E8%AF%9D%E6%95%88%E6%9E%9C4.png" alt="对话效果4"></p>
-<p>find the usb-a</p>
+<p><img src="/2025/05/21/LISA%E5%9B%BE%E5%83%8F%E5%88%86%E5%89%B2%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%B8%8A%E6%89%8B%E5%92%8C%E5%BE%AE%E8%B0%83/%E5%AF%B9%E8%AF%9D%E6%95%88%E6%9E%9C4.png" alt="find the usb-a"></p>
 <p>对于比较不常见的需求，模型没有办法认识，这跟数据集的广度有关系，如果有需求可以进行LoRA微调，有提供合并权重的脚本。</p>
 <h2 id="🚀gradio可视化UI"><a href="#🚀gradio可视化UI" class="headerlink" title="🚀gradio可视化UI"></a>🚀gradio可视化UI</h2><p><strong>app.py</strong>脚本使用gradio这个webUI库实现了可视化预测，gr.Interface是按照gradio官方预设的顺序渲染这些组件：</p>
 <pre class="line-numbers language-python"><code class="language-python">demo <span class="token operator">=</span> gr<span class="token punctuation">.</span>Interface<span class="token punctuation">(</span>
@@ -1035,6 +1034,15 @@ Saving checkpoint shards: 100%<span class="token operator">|</span>████�
 
    
   <nav class="article-nav">
+    
+      <a href="/2025/06/12/SAM2%E6%9E%B6%E6%9E%84%E6%A6%82%E8%A7%88%E5%92%8C%E8%AF%A6%E7%BB%86%E8%A7%A3%E8%AF%BB/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            SAM2架构概览和详细解读
+          
+        </div>
+      </a>
     
     
       <a href="/2025/05/07/SAM2%E5%9B%BE%E5%83%8F%E5%88%86%E5%89%B2%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%BE%AE%E8%B0%83/" class="article-nav-link">
