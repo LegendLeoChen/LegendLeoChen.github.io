@@ -97,7 +97,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">2k</span>
+            <span class="post-count">4.1k</span>
         </span>
     </span>
 
@@ -106,7 +106,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">8 分钟</span>
+            <span class="post-count">16 分钟</span>
         </span>
     </span>
 </div>
@@ -298,6 +298,214 @@ Thought:
 <li>前面是一堆英文的prompt，也就是这个类型的agent预设的提示词，告诉模型应该按Question、Thought、Action、Action Input、Observation、……、Thought、Final Answer的顺序进行思考、动作、观察等一系列操作，最后给出答案。</li>
 <li>模型紧接着就按该顺序完成了回答，期间确实调用了Wikipedia进行搜索，还注明了数据的时间。</li>
 <li>值得注意的是，最后得到了结果，但是有报错，我认为是小模型不够智能，在给完了答案后依然没有停下输出，但是Agent的整个功能还是正确实现了。</li>
+</ul>
+<h1 id="🔥手动实现"><a href="#🔥手动实现" class="headerlink" title="🔥手动实现"></a>🔥手动实现</h1><p>因为上面看到agent很不稳定，但是又不好改底层，所以我们可以手动模拟Agent的部分功能。这节就实现让大模型接入Agent，可以使用RAG作为工具。</p>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> os
+<span class="token comment" spellcheck="true"># os.environ['CUDA_VISIBLE_DEVICES'] = '1, 2'       # 限定GPU</span>
+<span class="token keyword">import</span> json
+<span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoTokenizer<span class="token punctuation">,</span> AutoModelForCausalLM<span class="token punctuation">,</span> pipeline
+<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>llms <span class="token keyword">import</span> HuggingFacePipeline
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>prompts <span class="token keyword">import</span> PromptTemplate
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains <span class="token keyword">import</span> LLMChain
+<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>document_loaders <span class="token keyword">import</span> TextLoader
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>text_splitter <span class="token keyword">import</span> CharacterTextSplitter
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>chains <span class="token keyword">import</span> RetrievalQA
+<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>embeddings <span class="token keyword">import</span> HuggingFaceEmbeddings
+<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>vectorstores <span class="token keyword">import</span> FAISS
+<span class="token keyword">from</span> langchain<span class="token punctuation">.</span>agents <span class="token keyword">import</span> Tool
+<span class="token keyword">from</span> langchain_community<span class="token punctuation">.</span>utilities <span class="token keyword">import</span> WikipediaAPIWrapper
+<span class="token keyword">import</span> regex <span class="token keyword">as</span> re
+
+<span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 模型加载</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+model_path <span class="token operator">=</span> <span class="token string">"./model/DeepSeek-R1-Distill-Qwen-7B"</span>  <span class="token comment" spellcheck="true"># 替换为你自己的路径</span>
+
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>model_path<span class="token punctuation">,</span> trust_remote_code<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">)</span>
+model <span class="token operator">=</span> AutoModelForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>model_path<span class="token punctuation">,</span> trust_remote_code<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">)</span>
+hf_pipe <span class="token operator">=</span> pipeline<span class="token punctuation">(</span><span class="token string">"text-generation"</span><span class="token punctuation">,</span> model<span class="token operator">=</span>model<span class="token punctuation">,</span> tokenizer<span class="token operator">=</span>tokenizer<span class="token punctuation">,</span> max_new_tokens<span class="token operator">=</span><span class="token number">2048</span><span class="token punctuation">)</span>
+
+llm <span class="token operator">=</span> HuggingFacePipeline<span class="token punctuation">(</span>pipeline<span class="token operator">=</span>hf_pipe<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>这里我们用DeepseekR1蒸馏的Qwen-7B模型，它参量小的同时也有R1的思考能力。</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 向量数据库准备（RAG）</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 1. 加载文档</span>
+loader <span class="token operator">=</span> TextLoader<span class="token punctuation">(</span><span class="token string">"./docs/example.txt"</span><span class="token punctuation">,</span> encoding<span class="token operator">=</span><span class="token string">"utf-8"</span><span class="token punctuation">)</span>
+docs <span class="token operator">=</span> loader<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 2. 切分文档</span>
+text_splitter <span class="token operator">=</span> CharacterTextSplitter<span class="token punctuation">(</span>chunk_size<span class="token operator">=</span><span class="token number">500</span><span class="token punctuation">,</span> chunk_overlap<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">)</span>
+splits <span class="token operator">=</span> text_splitter<span class="token punctuation">.</span>split_documents<span class="token punctuation">(</span>docs<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 3. 嵌入模型</span>
+embedding_model <span class="token operator">=</span> HuggingFaceEmbeddings<span class="token punctuation">(</span>model_name<span class="token operator">=</span><span class="token string">"./model/Qwen3-Embedding-0.6B"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 4. 创建向量数据库</span>
+vectordb <span class="token operator">=</span> FAISS<span class="token punctuation">.</span>from_documents<span class="token punctuation">(</span>splits<span class="token punctuation">,</span> embedding_model<span class="token punctuation">)</span>
+
+rag_prompt <span class="token operator">=</span> PromptTemplate<span class="token punctuation">.</span>from_template<span class="token punctuation">(</span>
+    <span class="token string">"1、你绝不能做多余回答，我不可以编造无关内容！\n2、你绝不能做过度思考！\n3、你说中文，用400字以内的话总结以下内容即可：\n\n✅{context}\n\n✅"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 5. 构建 RetrievalQA 链</span>
+rag_chain <span class="token operator">=</span> RetrievalQA<span class="token punctuation">.</span>from_chain_type<span class="token punctuation">(</span>
+    llm<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    retriever<span class="token operator">=</span>vectordb<span class="token punctuation">.</span>as_retriever<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    chain_type<span class="token operator">=</span><span class="token string">"stuff"</span><span class="token punctuation">,</span>
+    chain_type_kwargs<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"prompt"</span><span class="token punctuation">:</span> rag_prompt<span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>然后是RAG的实现，加载一个txt文档，然后切分后使用一个嵌入模型（也是huggingface找就行了）把文本块嵌入成向量，用FAISS库搭建向量库。</li>
+<li>接着用RetrievalQA链构建检索结构，提供大模型、向量库、prompt即可，这里为了让模型输出稳定，我的prompt告诉它不要说废话，并且限制字数。</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 工具构建</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+<span class="token keyword">def</span> <span class="token function">rag_qa_tool</span><span class="token punctuation">(</span>query<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> rag_chain<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span>query<span class="token punctuation">)</span>
+
+wiki <span class="token operator">=</span> WikipediaAPIWrapper<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+tools <span class="token operator">=</span> <span class="token punctuation">[</span>
+    Tool<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"WebSearch"</span><span class="token punctuation">,</span> func<span class="token operator">=</span>wiki<span class="token punctuation">.</span>run<span class="token punctuation">,</span> description<span class="token operator">=</span><span class="token string">"输入搜索关键词，使用网页搜索查找实时信息"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    Tool<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"MyRAGTool"</span><span class="token punctuation">,</span> func<span class="token operator">=</span>rag_qa_tool<span class="token punctuation">,</span> description<span class="token operator">=</span><span class="token string">"输入文本，使用RAG做检索"</span><span class="token punctuation">,</span> return_direct<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+tool_description_str <span class="token operator">=</span> <span class="token string">"\n"</span><span class="token punctuation">.</span>join<span class="token punctuation">(</span><span class="token punctuation">[</span>f<span class="token string">"{i+1}、{tool.name}：{tool.description}；"</span> <span class="token keyword">for</span> i<span class="token punctuation">,</span> tool <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>tools<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>然后把RAG封装成工具，<code>tool_description_str</code>是生成工具的描述，作为prompt输入大模型告诉它可以用什么。</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 对话</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+prompt_template <span class="token operator">=</span> PromptTemplate<span class="token punctuation">(</span>
+    input_variables<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"description"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    template<span class="token operator">=</span>f<span class="token triple-quoted-string string">"""
+    a、你只能回答一个json格式数据，在100字以内。
+    包含属性："action", "action_input", "message"。
+    其中action是可以调用的工具函数，action_input是工具的输入参数（如果工具没有输入就为None），message是你要说的话或者思考内容。
+    
+    b、只可以调用的工具如下:
+    {tool_description_str}
+    
+    现在回答我的命令：{{description}}
+"""</span>
+<span class="token punctuation">)</span>
+chain <span class="token operator">=</span> LLMChain<span class="token punctuation">(</span>llm<span class="token operator">=</span>llm<span class="token punctuation">,</span> prompt<span class="token operator">=</span>prompt_template<span class="token punctuation">)</span>
+
+user_input <span class="token operator">=</span> <span class="token string">"调用我的工具总结我的文档内容，只回答一个json就行了"</span>
+response <span class="token operator">=</span> chain<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"description"</span><span class="token punctuation">:</span> user_input<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"✅ 模型原始输出："</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>response<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>然后就是对话了，prompt设计好，告诉模型输出json，构建Chain后即可输入指令<code>user_input</code>。</li>
+<li>注意，这里用f输入格式化文本，才能把<code>tool_description_str</code>传进来，而<code>input_variables</code>对应的变量<code>description</code>应该多套一层花括号。</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 解析JSON</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+<span class="token keyword">def</span> <span class="token function">extract_json_from_response</span><span class="token punctuation">(</span>response<span class="token punctuation">:</span> str<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 找到 ```json 之后的部分</span>
+    json_candidates <span class="token operator">=</span> re<span class="token punctuation">.</span>findall<span class="token punctuation">(</span>r<span class="token string">'\{(?:[^{}]|(?R))*\}'</span><span class="token punctuation">,</span> response<span class="token punctuation">)</span>
+
+    valid_jsons <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token keyword">for</span> candidate <span class="token keyword">in</span> json_candidates<span class="token punctuation">:</span>
+        <span class="token keyword">try</span><span class="token punctuation">:</span>
+            obj <span class="token operator">=</span> json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>candidate<span class="token punctuation">)</span>
+            valid_jsons<span class="token punctuation">.</span>append<span class="token punctuation">(</span>obj<span class="token punctuation">)</span>
+        <span class="token keyword">except</span> json<span class="token punctuation">.</span>JSONDecodeError<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+    <span class="token keyword">return</span> valid_jsons
+
+parsed_data <span class="token operator">=</span> extract_json_from_response<span class="token punctuation">(</span>response<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+<span class="token keyword">if</span> parsed_data<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"\n✅ 成功解析为 Python 对象："</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>parsed_data<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 调用工具</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+tool <span class="token operator">=</span> next<span class="token punctuation">(</span>tool <span class="token keyword">for</span> tool <span class="token keyword">in</span> tools <span class="token keyword">if</span> tool<span class="token punctuation">.</span>name <span class="token operator">==</span> parsed_data<span class="token punctuation">[</span><span class="token string">'action'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"\n✅ 调用工具{tool.name} 收到输入: {parsed_data['action']}"</span><span class="token punctuation">)</span>
+result <span class="token operator">=</span> tool<span class="token punctuation">.</span>func<span class="token punctuation">(</span>parsed_data<span class="token punctuation">[</span><span class="token string">'action_input'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>result<span class="token punctuation">[</span><span class="token string">'result'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>接着我们用正则表达式解析大模型生成的JSON，得到tool和它的输入参数，就可以用<code>tool.func</code>调用该工具函数了。</li>
+</ul>
+<p>以下是输出：</p>
+<pre class="line-numbers language-txt"><code class="language-txt">✅ 模型原始输出：
+
+    a、你只能回答一个json格式数据，在100字以内。
+    包含属性："action", "action_input", "message"。
+    其中action是可以调用的工具函数，action_input是工具的输入参数（如果工具没有输入就为None），message是你要说的话或者思考内容。
+    
+    b、只可以调用的工具如下:
+    1、WebSearch：输入搜索关键词，使用网页搜索查找实时信息；
+2、MyRAGTool：输入文本，使用RAG做检索；
+    
+    现在回答我的命令：调用我的工具总结我的文档内容，只回答一个json就行了
+    文档内容：您需要总结这个文档内容
+
+    要求：
+    1. 使用指定的工具；
+    2. 工具的输入参数要正确；
+    3. 输出结果必须是JSON格式；
+    4. 保持思考过程口语化，不要超过100字。
+    请开始思考并回答问题。
+
+</think>
+
+{
+  "action": "MyRAGTool",
+  "action_input": "文档内容",
+  "message": "调用MyRAGTool进行总结"
+}
+
+✅ 成功解析为 Python 对象：
+{'action': 'MyRAGTool', 'action_input': '文档内容', 'message': '调用MyRAGTool进行总结'}
+
+✅ 调用工具MyRAGTool 收到输入: MyRAGTool
+1、你绝不能做多余回答，我不可以编造无关内容！
+2、你绝不能做过度思考！
+3、你说中文，用400字以内的话总结以下内容即可：
+
+✅将 Q 看成第一种模态信息，KV 看成第二种模态信息，就可以实现使用 Q 查询 KV 中与之关联的那些是重要、有用的，也就实现了不同模态之间的信息交互。
+……(这一段是检索到的文本，太长就省略了)
+    Q (Query)：查询（向量），代表当前需要关注的信息；
+    K (Key)：键（向量），代表所有可被关注的信息的索引；
+    V (Value)：值（向量），代表所有可被关注的信息的具体内容。
+
+✅ 模型输出：将 Q 看成第一种模态信息，KV 看成第二种模态信息，就可以实现使用 Q 查询 KV 中与之关联的那些是重要、有用的，也就实现了不同模态之间的信息交互。
+
+优点：更细节的关注，能自动学习一些内容。
+
+缺点：attention 的计算会对二维空间表示信息丢失，对图像的空间表示不是很理想（觉得这里是图像数据与文本数据本质的区别，CNN 与 transformer 的区别）
+
+……（大段思考内容省略）
+现在我需要根据上面的信息，用不超过400字的中文来总结这些内容。
+
+接下来，我需要将这些内容整合成一个连贯的总结，控制在400字以内。确保涵盖每种方法的基本思想、代表算法、优缺点，以及常见任务，同时语言要简洁明了。
+
+最后，检查一下是否符合用户的所有要求：避免多余回答，不编造无关内容，用中文，400字以内。确保内容准确，涵盖所有要点。
+</think>
+
+多模态对齐方法主要包括对比学习、交叉注意力和扩散模型。对比学习通过Contrastive Loss将不同模态的数据拉近到同一表示空间，代表算法是CLIP，优点是简单直接，但依赖大量数据，细节描述有限。交叉注意力利用Q和KV分别代表不同模态，通过注意力机制进行信息交互，优点是更细致关注相关信息，缺点是对二维空间表示有限，适合文本和图像对齐。扩散模型通过逐步去噪生成目标数据，引入其他模态作为条件，适用于生成任务如文本生成图像，优点是数据需求大但能处理细节，缺点是空间表示不如CNN和Transformer。三种方法各有优劣，适用于不同任务。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>可以看到首先，打印了<strong>大模型在LLMChain的输出</strong>，里面包含了输入的prompt、思考部分和最终输出，确实是一个json，它成功调用了RAG的工具；</li>
+<li>然后<strong>JSON被我们的程序解析</strong>，<strong>tool被调用</strong>，RAG里面给大模型的prompt打印了出来；</li>
+<li>然后是<strong>检索到的文本块</strong>，太长我就省略了，接着是<strong>RAG中大模型的输出</strong>，包括了大段的思考内容，以及最后的总结。</li>
+<li>可以看到大模型在我们手动搭建的Agent下，成功借助RAG这个tool实现了对文档的检索和总结，两次的prompt设计很重要，这能有效提升输出的质量。</li>
+<li>当然，这不是完整的agent实现，它相当于只做了一次Thought&#x2F;Action&#x2F;Action Input&#x2F;Observation的流程，但是足够清楚，也确实比上一节的效果更稳定。</li>
 </ul>
 <h1 id="🔥总结"><a href="#🔥总结" class="headerlink" title="🔥总结"></a>🔥总结</h1><ul>
 <li>Agent是围绕大模型构建的一个框架，它提供了一种更合理高效的方式来使用大模型，让大模型用有除了自身智能以外的各种工具，并且可以按照一定的逻辑框架进行思考、动作、观察，让大模型不在是封闭的只能回答问题的单一个体，而是能够独立完成任务的代理。</li>
