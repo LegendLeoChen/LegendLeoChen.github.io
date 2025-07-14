@@ -97,7 +97,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">4.1k</span>
+            <span class="post-count">5.9k</span>
         </span>
     </span>
 
@@ -106,7 +106,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">16 分钟</span>
+            <span class="post-count">22 分钟</span>
         </span>
     </span>
 </div>
@@ -297,7 +297,7 @@ Thought:
 <ul>
 <li>前面是一堆英文的prompt，也就是这个类型的agent预设的提示词，告诉模型应该按Question、Thought、Action、Action Input、Observation、……、Thought、Final Answer的顺序进行思考、动作、观察等一系列操作，最后给出答案。</li>
 <li>模型紧接着就按该顺序完成了回答，期间确实调用了Wikipedia进行搜索，还注明了数据的时间。</li>
-<li>值得注意的是，最后得到了结果，但是有报错，我认为是小模型不够智能，在给完了答案后依然没有停下输出，但是Agent的整个功能还是正确实现了。</li>
+<li>值得注意的是，最后得到了结果，但是有报错，实际上是小模型不够智能，在给完了答案后依然没有停下输出，但是Agent的整个功能还是正确实现了。</li>
 </ul>
 <h1 id="🔥手动实现"><a href="#🔥手动实现" class="headerlink" title="🔥手动实现"></a>🔥手动实现</h1><p>因为上面看到agent很不稳定，但是又不好改底层，所以我们可以手动模拟Agent的部分功能。这节就实现让大模型接入Agent，可以使用RAG作为工具。</p>
 <pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">import</span> os
@@ -505,8 +505,137 @@ result <span class="token operator">=</span> tool<span class="token punctuation"
 <li>然后<strong>JSON被我们的程序解析</strong>，<strong>tool被调用</strong>，RAG里面给大模型的prompt打印了出来；</li>
 <li>然后是<strong>检索到的文本块</strong>，太长我就省略了，接着是<strong>RAG中大模型的输出</strong>，包括了大段的思考内容，以及最后的总结。</li>
 <li>可以看到大模型在我们手动搭建的Agent下，成功借助RAG这个tool实现了对文档的检索和总结，两次的prompt设计很重要，这能有效提升输出的质量。</li>
-<li>当然，这不是完整的agent实现，它相当于只做了一次Thought&#x2F;Action&#x2F;Action Input&#x2F;Observation的流程，但是足够清楚，也确实比上一节的效果更稳定。</li>
+<li>当然，这不是完整的agent实现，它相当于只做了一次Thought&#x2F;Action&#x2F;Action Input&#x2F;Observation的流程，但是足够清楚，在同样使用小规模模型的情况下，确实比上一节的效果更稳定。</li>
 </ul>
+<h1 id="🔥手动实现（API）"><a href="#🔥手动实现（API）" class="headerlink" title="🔥手动实现（API）"></a>🔥手动实现（API）</h1><p>通过调用API使用Qwen3的plus版本实现Agent，厂商的模型参数量大，性能更强大。<a target="_blank" rel="noopener" href="https://bailian.console.aliyun.com/?spm=5176.29597918.J_bNSze_09Z5SDm7ZHdpz3Y.1.e0327b08pqDxAz&tab=api#/api/?type=model&url=https%3A%2F%2Fhelp.aliyun.com%2Fdocument_detail%2F2712576.html">Qwen3 API参考</a>，参考这个链接会教你如何开通千问，添加API KEY，然后调用千问。在<a target="_blank" rel="noopener" href="https://bailian.console.aliyun.com/?spm=5176.29597918.J_bNSze_09Z5SDm7ZHdpz3Y.1.e0327b0888wHfq&tab=model#/model-market/detail/qwen3?modelGroup=qwen3">这个链接</a>可以看到每个模型的名称及其免费额度，付费的话我看了下对于个人使用也不贵。</p>
+<ul>
+<li>在我们的agent里，只需要把前面我们完成的代码中llm加载部分改成如下的API封装，千问有兼容openAI的SDK，所以直接用就行了，<code>model=&quot;qwen-plus&quot;</code>就是模型名称。</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token keyword">from</span> langchain_openai <span class="token keyword">import</span> ChatOpenAI  <span class="token comment" spellcheck="true"># 新版封装</span>
+
+<span class="token comment" spellcheck="true"># 建议把密钥放到环境变量，避免写死</span>
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"OPENAI_API_KEY"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"你的api key（sk开头）"</span>
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">"OPENAI_BASE_URL"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"https://dashscope.aliyuncs.com/compatible-mode/v1"</span>
+
+llm <span class="token operator">=</span> ChatOpenAI<span class="token punctuation">(</span>
+    model<span class="token operator">=</span><span class="token string">"qwen-plus"</span><span class="token punctuation">,</span>            <span class="token comment" spellcheck="true"># DashScope 兼容模型名</span>
+    temperature<span class="token operator">=</span><span class="token number">0.7</span><span class="token punctuation">,</span>              <span class="token comment" spellcheck="true"># 其他超参按需设置</span>
+    max_tokens<span class="token operator">=</span><span class="token number">2048</span>
+<span class="token punctuation">)</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>得到如下结果，更大的模型回答更加清晰明了，没有废话，输出的json更干净没有多余文本。值得注意的是它没有把两个prompt打出来，说明之前小模型是自己把prompt打出来的？这个就比较奇怪。</li>
+</ul>
+<pre class="line-numbers language-plaintext"><code class="language-plaintext">✅ 模型原始输出：
+{
+  "action": "MyRAGTool",
+  "action_input": "总结文档内容",
+  "message": "正在使用RAG工具检索并总结文档内容。"
+}
+
+✅ 成功解析为 Python 对象：
+{'action': 'MyRAGTool', 'action_input': '总结文档内容', 'message': '正在使用RAG工具检索并总结文档内容。'}
+
+✅ 调用工具MyRAGTool 收到输入: 总结文档内容
+
+🔥 最终结果：多模态对齐的核心是将不同模态（如图像与文本）映射到一个共享特征空间，实现信息的关联与理解。主流方法包括三类：一是基于对比学习的方法，如CLIP，通过对比损失（如InfoNCE）拉近语义一致的跨模态表示；二是交叉注意力机制，通过QKV结构实现不同模态间的信息交互，使模型在解码时能动态关注相关模态内容；三是扩散模型，利用其他模态作为条件引导去噪过程，逐步生成目标数据。  
+CLIP优点在于简单有效、易于扩展，但依赖大量数据和计算资源；交叉注意力可实现更细粒度的上下文关注，但会丢失部分空间信息，不完全适合图像；扩散模型适用于文本生成图像等任务，便于多模态对齐，但也需大量数据且细节控制有限。总体而言，这三类方法各有优劣，常结合使用以提升多模态任务效果。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>既然厂商训练的大模型效果这么好，我就使用它完成整个agent的效果。<ol>
+<li>首先prompt要完善，告诉模型我们会输入历史信息，包括任务内容、模型输出的json、tool返回到结果。</li>
+<li>接着是手动构建一个主循环能够让Agent循环起来，当模型输出Final时结束任务，否则将新的信息拼接到原本的内容输入到下一轮对话。</li>
+</ol>
+</li>
+</ul>
+<pre class="line-numbers language-python"><code class="language-python"><span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 对话LLMChain构建</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+prompt_template <span class="token operator">=</span> PromptTemplate<span class="token punctuation">(</span>
+    input_variables<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"question"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    template<span class="token operator">=</span>f<span class="token triple-quoted-string string">"""
+    1、你只能回答一个json格式数据，在100字以内。
+    包含属性："action", "action_input", "message"。
+    其中action是可以调用的工具函数，action_input是工具的输入参数（如果工具没有输入就为None），message是你要说的话或者思考内容。
+    如果你认为完成了最终任务，那就在action填入Final，message填入最终的完整回答。
+    
+    2、只可以调用的工具如下:
+    {tool_description_str}
+    
+    3、我给你的信息会包括：我的任务Question、你的历史输出Output、调用返回到结果Observation，这不是你要输出的。
+    
+    现在回答我的命令：{{question}}，只回答一个json就行了
+"""</span>
+<span class="token punctuation">)</span>
+chain <span class="token operator">=</span> LLMChain<span class="token punctuation">(</span>llm<span class="token operator">=</span>llm<span class="token punctuation">,</span> prompt<span class="token operator">=</span>prompt_template<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># ======================</span>
+<span class="token comment" spellcheck="true"># 主循环</span>
+<span class="token comment" spellcheck="true"># ======================</span>
+user_input <span class="token operator">=</span> <span class="token string">"Question：调用我的工具总结我的文档内容"</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'❓ {user_input}'</span><span class="token punctuation">)</span>
+time <span class="token operator">=</span> <span class="token number">0</span>
+<span class="token keyword">while</span> <span class="token boolean">True</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"---------------------------第{time}轮--------------------------------"</span><span class="token punctuation">)</span>
+    response <span class="token operator">=</span> chain<span class="token punctuation">.</span>invoke<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">"question"</span><span class="token punctuation">:</span> user_input<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token string">'text'</span><span class="token punctuation">]</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"📧 Output：\n{response}"</span><span class="token punctuation">)</span>
+
+    parsed_data <span class="token operator">=</span> extract_json_from_response<span class="token punctuation">(</span>response<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+    <span class="token keyword">if</span> parsed_data<span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"📧 成功解析为 Python 对象："</span><span class="token punctuation">)</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>parsed_data<span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> parsed_data<span class="token punctuation">[</span><span class="token string">'action'</span><span class="token punctuation">]</span><span class="token operator">==</span><span class="token string">'Final'</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"\n✅ Final Answer：{parsed_data['message']}"</span><span class="token punctuation">)</span>
+        <span class="token keyword">break</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        tool <span class="token operator">=</span> next<span class="token punctuation">(</span>tool <span class="token keyword">for</span> tool <span class="token keyword">in</span> tools <span class="token keyword">if</span> tool<span class="token punctuation">.</span>name <span class="token operator">==</span> parsed_data<span class="token punctuation">[</span><span class="token string">'action'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"\n🧰 Action：调用工具 {tool.name} ，输入: {parsed_data['action_input']}"</span><span class="token punctuation">)</span>
+        result <span class="token operator">=</span> tool<span class="token punctuation">.</span>func<span class="token punctuation">(</span>parsed_data<span class="token punctuation">[</span><span class="token string">'action_input'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"\n🔥 Observation：{result['result']}"</span><span class="token punctuation">)</span>
+        user_input <span class="token operator">=</span> f<span class="token string">"{user_input}\nOutput：{parsed_data}\nObservation：{result['result']}"</span>
+        time <span class="token operator">+=</span> <span class="token number">1</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"---------------------------已完成--------------------------------"</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># print(f'\n📂 ALL：{user_input}')</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<ul>
+<li>可以看到终端输出如下，大模型可以在我的Agent框架当中一步一步地完成任务，非常顺利，这个框架和ReAct差不多了。</li>
+</ul>
+<pre class="line-numbers language-plaintext"><code class="language-plaintext">❓ Question：调用我的工具总结我的文档内容
+---------------------------第0轮--------------------------------
+📧 Output：
+{
+  "action": "MyRAGTool",
+  "action_input": "总结文档内容",
+  "message": "正在使用RAG工具总结文档内容。"
+}
+📧 成功解析为 Python 对象：
+{'action': 'MyRAGTool', 'action_input': '总结文档内容', 'message': '正在使用RAG工具总结文档内容。'}
+
+🧰 Action：调用工具 MyRAGTool ，输入: 总结文档内容
+
+🔥 Observation：多模态对齐的核心是将不同模态（如图像、文本）映射到共享特征空间，以实现信息交互与语义一致。主流方法包括三类：
+
+1. **基于对比学习的方法**（如CLIP）：使用独立编码器提取不同模态的特征，通过对比损失（如InfoNCE）使语义相近的模态表示更接近，反之远离。优点是简单有效，适合大规模数据，但缺乏细粒度控制。
+
+2. **基于交叉注意力的方法**：通过QKV机制实现跨模态信息交互，Q来自一种模态，KV来自另一种，可在每一步解码中动态关注相关部分。优点是对细节关注更强，能自动学习关联，但处理图像等二维结构时可能丢失空间信息。
+
+3. **扩散模型的方法**：在去噪过程中引入其他模态作为条件，逐步生成目标数据，实现语义对齐。常见于文本生成图像任务，优点是对齐灵活，但依赖大量数据，难以精细控制，需结合CLIP等辅助。
+
+此外，多模态大模型常采用类似CLIP的方式进行特征拼接，输入LLM进行联合建模，虽简便高效，但仍依赖大数据和算力，且细节表达有限。
+---------------------------第1轮--------------------------------
+📧 Output：
+{
+  "action": "Final",
+  "action_input": null,
+  "message": "文档总结完成，多模态对齐的主流方法包括基于对比学习、交叉注意力和扩散模型的方法，各有优劣，适用于不同场景。"
+}
+📧 成功解析为 Python 对象：
+{'action': 'Final', 'action_input': None, 'message': '文档总结完成，多模态对齐的主流方法包括基于对比学习、交叉注意力和扩散模型的方法，各有优劣，适用于不同场景。'}
+
+✅ Final Answer：文档总结完成，多模态对齐的主流方法包括基于对比学习、交叉注意力和扩散模型的方法，各有优劣，适用于不同场景。
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h1 id="🔥总结"><a href="#🔥总结" class="headerlink" title="🔥总结"></a>🔥总结</h1><ul>
 <li>Agent是围绕大模型构建的一个框架，它提供了一种更合理高效的方式来使用大模型，让大模型用有除了自身智能以外的各种工具，并且可以按照一定的逻辑框架进行思考、动作、观察，让大模型不在是封闭的只能回答问题的单一个体，而是能够独立完成任务的代理。</li>
 <li>使用LangChain可以轻松实现Agent的构建并实现其功能，并且可以很方便的定制各种工具，定制各种逻辑框架，让大模型能够满足不同场景用户的需求。</li>
